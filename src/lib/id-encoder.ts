@@ -1,19 +1,12 @@
 
+// Originally used Base64url encoding for obfuscation.
+// Switched to direct UUIDs as per user request to use standard IDs.
+// Keeping functions as passthrough to avoid breaking import references.
+
 export function encodeId(id: string): string {
-    if (!id) return "";
-    try {
-        return btoa(id).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    } catch (e) {
-        return id;
-    }
+    return id;
 }
 
 export function decodeId(encodedId: string): string {
-    if (!encodedId) return "";
-    try {
-        const base64 = encodedId.replace(/-/g, '+').replace(/_/g, '/');
-        return atob(base64);
-    } catch (e) {
-        return encodedId;
-    }
+    return encodedId;
 }
