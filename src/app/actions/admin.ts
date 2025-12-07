@@ -137,6 +137,14 @@ export async function createInvitation(email: string, role: string) {
             })
         }
 
+        // Check if user already exists
+        const existingUser = await prisma.user.findUnique({
+            where: { email }
+        })
+        if (existingUser) {
+            return { success: false, error: "A user with this email already exists." }
+        }
+
         // Generate secure token
         const token = crypto.randomUUID()
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours

@@ -163,8 +163,8 @@ export default function AdminUsersPage() {
                     <CardContent className="p-6 flex items-start justify-between">
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-                            <h3 className="text-3xl font-bold mt-2">{users.length || 147}</h3>
-                            <p className="text-xs text-green-600 mt-1">+8 this month</p>
+                            <h3 className="text-3xl font-bold mt-2">{users.length}</h3>
+                            <p className="text-xs text-green-600 mt-1">Registered members</p>
                         </div>
                         <div className="p-2 bg-primary/10 rounded-lg">
                             <Users className="h-5 w-5 text-primary" />

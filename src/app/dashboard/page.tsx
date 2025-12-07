@@ -38,11 +38,13 @@ export default async function DashboardPage() {
         .slice(0, 5)
 
     // Try to get user count (may fail if not admin)
-    let userCount = 5
+    let userCount = 0
+    let userCountAuthorized = false
     try {
         const userResult = await getUsers()
         if (userResult.success && userResult.data) {
             userCount = userResult.data.length
+            userCountAuthorized = true
         }
     } catch {
         // Keep default count if not authorized
@@ -117,20 +119,22 @@ export default async function DashboardPage() {
                         </p>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Active Users
-                        </CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{userCount}</div>
-                        <p className="text-xs text-muted-foreground">
-                            Security team members
-                        </p>
-                    </CardContent>
-                </Card>
+                {userCountAuthorized && (
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">
+                                Active Users
+                            </CardTitle>
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{userCount}</div>
+                            <p className="text-xs text-muted-foreground">
+                                Security team members
+                            </p>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
 
             {/* Trend Chart */}
@@ -209,9 +213,9 @@ export default async function DashboardPage() {
                                     >
                                         <div className="flex items-start gap-3">
                                             <div className={`w-2 h-2 rounded-full mt-2 ${vuln.severity === "CRITICAL" ? "bg-red-500" :
-                                                    vuln.severity === "HIGH" ? "bg-orange-500" :
-                                                        vuln.severity === "MEDIUM" ? "bg-yellow-500" :
-                                                            "bg-blue-500"
+                                                vuln.severity === "HIGH" ? "bg-orange-500" :
+                                                    vuln.severity === "MEDIUM" ? "bg-yellow-500" :
+                                                        "bg-blue-500"
                                                 }`} />
                                             <div>
                                                 <Link
