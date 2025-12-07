@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("POSTGRES_PRISMA_URL") // Vercel Postgres (Pooling)
+  directUrl = env("POSTGRES_URL_NON_POOLING") // Vercel Postgres (Direct)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  image         String?
+  role          String    @default("VIEWER") // ADMIN, ANALYST, VIEWER
+  status        String    @default("ACTIVE") // ACTIVE, INACTIVE, PENDING
+  isOnboarded   Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  vulnerabilities Vulnerability[]
+  auditLogs     AuditLog[]
+  comments      Comment[]
+  invitations   Invitation[]  @relation("UserInvitations")
+}
+
+model Vulnerability {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  status      String
+  severity    String
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  dread       DreadScore?
+  stride      StrideScore?
+  comments    Comment[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // New fields for rich dashboard
+  cveId             String?
+  cvssScore         Float?
+  asset             String?
+  affectedSystems   String? // JSON serialized
+  mitigations       String? // JSON serialized
+  references        String? // JSON serialized
+  attackVector      String?
+  attackComplexity  String?
+  privilegesRequired String?
+  impactAssessment  String? // JSON serialized
+}
+
+model Comment {
+  id              String        @id @default(cuid())
+  content         String
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  vulnerabilityId String
+  vulnerability   Vulnerability @relation(fields: [vulnerabilityId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String
+  entityType  String
+  entityId    String?
+  details     String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model DreadScore {
+  id              String        @id @default(cuid())
+  damage          Float
+  reproducibility Float
+  exploitability  Float
+  affectedUsers   Float
+  discoverability Float
+  total           Float
+  
+  vulnerabilityId String        @unique
+  vulnerability   Vulnerability @relation(fields: [vulnerabilityId], references: [id], onDelete: Cascade)
+}
+
+model StrideScore {
+  id                    String        @id @default(cuid())
+  spoofing              Boolean
+  tampering             Boolean
+  reputation            Boolean
+  informationDisclosure Boolean
+  denialOfService       Boolean
+  elevationOfPrivilege  Boolean
+  
+  vulnerabilityId       String        @unique
+  vulnerability         Vulnerability @relation(fields: [vulnerabilityId], references: [id], onDelete: Cascade)
+}
+
+model Invitation {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  role      String   @default("VIEWER")
+  expiresAt DateTime
+  inviterId String
+  inviter   User     @relation("UserInvitations", fields: [inviterId], references: [id])
+  createdAt DateTime @default(now())
+}
