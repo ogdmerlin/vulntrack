@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { getVulnerability, updateVulnerabilityStatus } from "@/app/actions/vulnerabilities"
+import { getVulnerability, updateVulnerabilityStatus, approveVulnerability } from "@/app/actions/vulnerabilities"
 import {
     Loader2,
     Share,
@@ -79,6 +79,25 @@ export default function VulnerabilityDetailsPage({ params }: { params: { id: str
             }
         } catch (err) {
             setToast({ message: "Failed to update status", type: 'error' })
+        } finally {
+            setActionLoading(false)
+        }
+    }
+
+    async function handleApprove() {
+        if (!vuln) return
+        setActionLoading(true)
+        try {
+            const decodedId = decodeId(params.id)
+            const result = await approveVulnerability(decodedId)
+            if (result.success) {
+                setVuln((prev: any) => ({ ...prev, approvalStatus: 'APPROVED' }))
+                setToast({ message: "Vulnerability approved!", type: 'success' })
+            } else {
+                setToast({ message: result.error || "Failed to approve", type: 'error' })
+            }
+        } catch (err) {
+            setToast({ message: "Failed to approve", type: 'error' })
         } finally {
             setActionLoading(false)
         }
@@ -164,6 +183,20 @@ export default function VulnerabilityDetailsPage({ params }: { params: { id: str
                     <p className="text-muted-foreground">{vuln.description?.slice(0, 60) || "Security Vulnerability"}...</p>
                 </div>
                 <div className="flex items-center gap-2">
+                    {/* Admin Approval Button */}
+                    {vuln.approvalStatus !== 'APPROVED' && (
+                        <Button
+                            size="sm"
+                            variant="default" // Primary color to stand out
+                            className="bg-orange-600 hover:bg-orange-700"
+                            onClick={handleApprove}
+                            disabled={actionLoading}
+                        >
+                            {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shield className="mr-2 h-4 w-4" />}
+                            Approve Vulnerability
+                        </Button>
+                    )}
+
                     <Button variant="outline" size="sm" onClick={handleShare}>
                         <Share className="mr-2 h-4 w-4" />
                         Share
@@ -199,6 +232,19 @@ export default function VulnerabilityDetailsPage({ params }: { params: { id: str
                     </Button>
                 </div>
             </div>
+
+            {/* Pending Approval Banner */}
+            {vuln.approvalStatus !== 'APPROVED' && (
+                <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4 flex items-center gap-4">
+                    <div className="bg-orange-500/20 p-2 rounded-full">
+                        <Clock className="h-6 w-6 text-orange-600" />
+                    </div>
+                    <div>
+                        <h3 className="font-semibold text-orange-700">Pending Approval</h3>
+                        <p className="text-sm text-orange-600/80">This vulnerability is visible only to you and administrators until it is approved.</p>
+                    </div>
+                </div>
+            )}
 
             <div className="grid gap-6 lg:grid-cols-3">
                 {/* Main Content Column (2/3) */}

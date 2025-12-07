@@ -5,6 +5,12 @@ const prisma = new PrismaClient()
 
 async function main() {
     const password = await hash('Admin123!', 12)
+    const team = await prisma.team.create({
+        data: {
+            name: "System Team"
+        }
+    })
+
     const user = await prisma.user.upsert({
         where: { email: 'admin@vulntrack.app' },
         update: {},
@@ -12,6 +18,9 @@ async function main() {
             email: 'admin@vulntrack.app',
             name: 'Admin User',
             password,
+            role: 'ADMIN',
+            isOnboarded: true,
+            teamId: team.id
         },
     })
     console.log({ user })

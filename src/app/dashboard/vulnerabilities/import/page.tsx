@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Loader2, Search, Import, ArrowRight } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Loader2, Search, Import, ArrowRight, ShieldAlert, Database, CheckCircle2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { DreadCalculator } from "@/components/scoring/DreadCalculator"
 
@@ -100,7 +101,24 @@ export default function ImportCvePage() {
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Preview Import</CardTitle>
+                            <div className="flex items-center justify-between">
+                                <CardTitle>Preview Import</CardTitle>
+                                <div className="flex gap-2">
+                                    {/* Source Badge */}
+                                    <Badge variant="outline" className="gap-1">
+                                        <Database className="h-3 w-3" />
+                                        {previewData.source || "NIST"}
+                                    </Badge>
+
+                                    {/* KEV Badge */}
+                                    {previewData.isKEV && (
+                                        <Badge variant="destructive" className="gap-1 animate-pulse">
+                                            <ShieldAlert className="h-3 w-3" />
+                                            Exploited in Wild
+                                        </Badge>
+                                    )}
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="space-y-2">
@@ -113,8 +131,11 @@ export default function ImportCvePage() {
                             </div>
 
                             <div className="border rounded-lg p-4">
-                                <h4 className="font-semibold mb-4">Auto-Calculated DREAD Score</h4>
-                                <DreadCalculator initialValues={previewData.dread} readOnly />
+                                <h4 className="font-semibold mb-4">Calculate DREAD Score</h4>
+                                <DreadCalculator
+                                    initialValues={previewData.dread}
+                                    onChange={(newValues) => setPreviewData((prev: any) => ({ ...prev, dread: newValues }))}
+                                />
                             </div>
 
                             <div className="flex justify-end">

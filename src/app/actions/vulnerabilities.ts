@@ -14,14 +14,55 @@ export async function getVulnerabilities() {
     }
 
     try {
+        // Fetch user to get teamId
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { teamId: true, role: true }
+        })
+
+        if (!user || (!user.teamId && user.role !== 'ADMIN')) {
+            // If not in a team and not admin, might be an issue, but return empty
+            return { success: true, data: [] }
+            // Note: Admin might be first user without team if logic failed, but we handle that.
+        }
+
+        const teamId = user.teamId
+
+        // Build Where Clause
+        let whereClause: any = {
+            teamId: teamId // Scope to team
+        }
+
+        // Visibility Logic
+        if (user.role !== 'ADMIN') {
+            // Non-Admins see APPROVED items OR their own items
+            whereClause = {
+                teamId: teamId,
+                OR: [
+                    { approvalStatus: "APPROVED" },
+                    { userId: session.user.id }
+                ]
+            }
+        } else {
+            // Admins see everything in the team (implicit)
+            // However, if teamId is null (super admin legacy), maybe show all?
+            // For strict multi-tenancy, we stick to teamId.
+        }
+
+        // Handle "Global" Admin case (First User before team logic)
+        // If teamId is null, we might show nothing or everything. 
+        // Better to rely on teamId. If teamId is null, show only own assets.
+        if (!teamId) {
+            whereClause = { userId: session.user.id }
+        }
+
         const vulnerabilities = await prisma.vulnerability.findMany({
-            where: {
-                userId: session.user.id
-            },
+            where: whereClause,
             orderBy: { createdAt: 'desc' },
             include: {
                 dread: true,
                 stride: true,
+                user: { select: { name: true, email: true } } // Include creator info
             }
         })
         return { success: true, data: vulnerabilities }
@@ -39,11 +80,13 @@ export async function getVulnerability(id: string) {
     }
 
     try {
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { teamId: true, role: true }
+        })
+
         const vulnerability = await prisma.vulnerability.findUnique({
-            where: {
-                id: id,
-                userId: session.user.id
-            },
+            where: { id },
             include: {
                 dread: true,
                 stride: true
@@ -52,6 +95,20 @@ export async function getVulnerability(id: string) {
 
         if (!vulnerability) {
             return { success: false, error: "Vulnerability not found" }
+        }
+
+        // Check Team Scope
+        if (vulnerability.teamId !== user?.teamId && user?.role !== 'ADMIN') { // simple check, robust check needs to handle nulls
+            // Actually, if teamIds mismatch, deny.
+            // Allow if ADMIN and both have null teamId?
+            if (vulnerability.teamId !== user?.teamId) {
+                return { success: false, error: "Unauthorized" }
+            }
+        }
+
+        // Check Status Visibility
+        if (vulnerability.userId !== session.user.id && user?.role !== 'ADMIN' && vulnerability.approvalStatus !== 'APPROVED') {
+            return { success: false, error: "Vulnerability pending approval" }
         }
 
         return { success: true, data: vulnerability }
@@ -70,6 +127,13 @@ export async function createVulnerability(data: any) {
     }
 
     try {
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { teamId: true, role: true }
+        })
+
+        if (!user) return { success: false, error: "User not found" }
+
         let nvdData: any = {}
         if (data.cveId) {
             const fetched = await fetchCVEData(data.cveId)
@@ -77,6 +141,8 @@ export async function createVulnerability(data: any) {
                 nvdData = fetched
             }
         }
+
+        const approvalStatus = user.role === 'ADMIN' ? 'APPROVED' : 'PENDING'
 
         const vuln = await prisma.vulnerability.create({
             data: {
@@ -89,6 +155,8 @@ export async function createVulnerability(data: any) {
                 references: nvdData.references,
                 affectedSystems: nvdData.affectedSystems,
                 userId: session.user.id,
+                teamId: user.teamId, // Assign to team
+                approvalStatus: approvalStatus,
                 dread: data.dread ? {
                     create: data.dread
                 } : undefined,
@@ -115,13 +183,24 @@ export async function updateVulnerability(id: string, data: any) {
     }
 
     try {
-        // Verify ownership
+        // Verify ownership (or admin)
+        const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true, teamId: true } })
         const existing = await prisma.vulnerability.findUnique({
-            where: { id, userId: session.user.id }
+            where: { id }
         })
 
         if (!existing) {
             return { success: false, error: "Vulnerability not found" }
+        }
+
+        // Authorization: Admin or Owner
+        // And must be in same team
+        if (existing.teamId !== user?.teamId) {
+            return { success: false, error: "Unauthorized" }
+        }
+
+        if (existing.userId !== session.user.id && user?.role !== 'ADMIN') {
+            return { success: false, error: "Unauthorized" }
         }
 
         const vulnerability = await prisma.vulnerability.update({
@@ -154,6 +233,29 @@ export async function updateVulnerability(id: string, data: any) {
         return { success: true, data: vulnerability }
     } catch (error) {
         return { success: false, error: "Failed to update vulnerability" }
+    }
+}
+
+export async function approveVulnerability(id: string) {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id || session.user.role !== 'ADMIN') {
+        return { success: false, error: "Unauthorized" }
+    }
+
+    try {
+        const vulnerability = await prisma.vulnerability.update({
+            where: { id },
+            data: { approvalStatus: 'APPROVED' }
+        })
+
+        await logAudit("APPROVE_VULNERABILITY", "Vulnerability", id, `Approved vulnerability: ${vulnerability.title}`)
+        revalidatePath('/dashboard/vulnerabilities')
+        revalidatePath(`/dashboard/vulnerabilities/${id}`)
+        return { success: true, data: vulnerability }
+    } catch (error) {
+        console.error("Failed to approve vulnerability:", error)
+        return { success: false, error: "Failed to approve vulnerability" }
     }
 }
 

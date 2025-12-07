@@ -69,6 +69,7 @@ interface Vulnerability {
     asset?: string
     createdAt: Date
     dread?: { total: number } | null
+    approvalStatus?: string
 }
 
 export default function VulnerabilitiesPage() {

@@ -17,8 +17,18 @@ async function checkAdmin() {
 
 export async function getUsers() {
     try {
-        await checkAdmin()
+        const session = await checkAdmin()
+
+        // Fetch admin's team ID
+        const admin = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { teamId: true }
+        })
+
         const users = await prisma.user.findMany({
+            where: {
+                teamId: admin?.teamId // Only show users in the same team
+            },
             orderBy: { createdAt: 'desc' },
             select: {
                 id: true,
@@ -149,13 +159,20 @@ export async function createInvitation(email: string, role: string) {
         const token = crypto.randomUUID()
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
+        // Get inviter's teamId
+        const inviter = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { teamId: true }
+        })
+
         const invitation = await prisma.invitation.create({
             data: {
                 email,
                 role,
                 token,
                 expiresAt,
-                inviterId: session.user.id
+                inviterId: session.user.id,
+                teamId: inviter?.teamId
             }
         })
 

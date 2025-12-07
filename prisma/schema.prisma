@@ -4,8 +4,17 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // Vercel Postgres (Pooling)
-  directUrl = env("POSTGRES_URL_NON_POOLING") // Vercel Postgres (Direct)
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id        String   @id @default(uuid())
+  name      String
+  users     User[]
+  vulnerabilities Vulnerability[]
+  invitations Invitation[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model User {
@@ -19,6 +28,10 @@ model User {
   isOnboarded   Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  
+  teamId        String?
+  team          Team?     @relation(fields: [teamId], references: [id])
+  
   vulnerabilities Vulnerability[]
   auditLogs     AuditLog[]
   comments      Comment[]
@@ -34,6 +47,11 @@ model Vulnerability {
   
   userId      String
   user        User     @relation(fields: [userId], references: [id])
+  
+  teamId      String?
+  team        Team?    @relation(fields: [teamId], references: [id])
+  
+  approvalStatus String @default("APPROVED") // PENDING, APPROVED, REJECTED
   
   dread       DreadScore?
   stride      StrideScore?
@@ -110,5 +128,9 @@ model Invitation {
   expiresAt DateTime
   inviterId String
   inviter   User     @relation("UserInvitations", fields: [inviterId], references: [id])
+  
+  teamId    String?
+  team      Team?    @relation(fields: [teamId], references: [id])
+  
   createdAt DateTime @default(now())
 }

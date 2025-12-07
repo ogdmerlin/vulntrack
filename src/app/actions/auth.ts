@@ -72,15 +72,42 @@ export async function registerUser(data: any) {
         // Hash password
         const hashedPassword = await hash(password, 10)
 
+        // Create user data object
+        let userData: any = {
+            email,
+            name,
+            password: hashedPassword,
+            role: role,
+            isOnboarded: role === 'ADMIN' ? true : false,
+        }
+
+        // Handle Team Assignment
+        if (userCount === 0) {
+            // First user creates the default team
+            const team = await prisma.team.create({
+                data: {
+                    name: "Didactic Organization" // Default name
+                }
+            })
+            userData.teamId = team.id
+        } else if (invitationId) {
+            // Find invitation details to get team
+            const invitation = await prisma.invitation.findUnique({
+                where: { id: invitationId }
+            })
+
+            if (invitation && invitation.teamId) {
+                userData.teamId = invitation.teamId
+            } else if (invitation) {
+                // Fallback: fetch inviter's team
+                const inviter = await prisma.user.findUnique({ where: { id: invitation.inviterId } })
+                if (inviter?.teamId) userData.teamId = inviter.teamId
+            }
+        }
+
         // Create user
         const user = await prisma.user.create({
-            data: {
-                email,
-                name,
-                password: hashedPassword,
-                role: role,
-                isOnboarded: role === 'ADMIN' ? true : false, // Auto-onboard admin
-            }
+            data: userData
         })
 
         // Delete invitation if it was used
