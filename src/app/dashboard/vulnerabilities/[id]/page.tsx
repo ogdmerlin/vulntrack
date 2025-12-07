@@ -133,19 +133,10 @@ export default function VulnerabilityDetailsPage({ params }: { params: { id: str
         )
     }
 
-    // Mock data for new fields if they are missing (since existing data won't have them)
-    // In a real app, these would come from the DB
-    const mockAffectedSystems = [
-        { name: "web-app-01.company.com", type: "Production Web Server", status: "Vulnerable", icon: Server },
-        { name: "web-app-02.company.com", type: "Staging Web Server", status: "Vulnerable", icon: Server },
-        { name: "db-01.company.com", type: "Primary Database", status: "At Risk", icon: Database },
-    ]
-
-    const mockMitigations = [
-        { step: 1, title: "Immediate: Implement input validation", desc: "Add parameterized queries and input sanitization to all user input fields", priority: "High", eta: "2 days" },
-        { step: 2, title: "Short-term: Update application framework", desc: "Upgrade to latest version with built-in SQL injection protection", priority: "Medium", eta: "1 week" },
-        { step: 3, title: "Long-term: Implement WAF rules", desc: "Deploy Web Application Firewall with SQL injection detection rules", priority: "Low", eta: "2 weeks" },
-    ]
+    // Parse stored JSON data
+    const affectedSystems = vuln.affectedSystems ? JSON.parse(vuln.affectedSystems) : []
+    const references = vuln.references ? JSON.parse(vuln.references) : []
+    const mitigations = vuln.mitigations ? JSON.parse(vuln.mitigations) : []
 
     return (
         <div className="space-y-6">
@@ -286,24 +277,28 @@ export default function VulnerabilityDetailsPage({ params }: { params: { id: str
 
                     {/* Affected Systems */}
                     <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">Affected Systems</h3>
+                        <h3 className="text-lg font-semibold">Affected Systems (CPEs)</h3>
                         <div className="grid gap-3">
-                            {mockAffectedSystems.map((system, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
-                                            <system.icon className="h-5 w-5 text-muted-foreground" />
+                            {affectedSystems.length > 0 ? (
+                                affectedSystems.map((system: string, i: number) => (
+                                    <div key={i} className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
+                                                <Server className="h-5 w-5 text-muted-foreground" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-sm">{system}</p>
+                                                <p className="text-xs text-muted-foreground">Affected Configuration</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-medium text-sm">{system.name}</p>
-                                            <p className="text-xs text-muted-foreground">{system.type}</p>
-                                        </div>
+                                        <Badge variant="destructive">Vulnerable</Badge>
                                     </div>
-                                    <Badge variant={system.status === "Vulnerable" ? "destructive" : "outline"}>
-                                        {system.status}
-                                    </Badge>
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                <p className="text-sm text-muted-foreground p-4 border rounded-lg bg-muted/20">
+                                    No affected systems data available from NVD.
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -327,18 +322,18 @@ export default function VulnerabilityDetailsPage({ params }: { params: { id: str
                             <div>
                                 <h4 className="font-medium mb-2 text-sm">External References</h4>
                                 <ul className="space-y-2 text-sm">
-                                    <li className="flex items-center gap-2">
-                                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                                        <a href="#" className="hover:underline text-primary">OWASP SQL Injection Guide</a>
-                                    </li>
-                                    <li className="flex items-center gap-2">
-                                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                                        <a href="#" className="hover:underline text-primary">CVE Details: CVE-2025-1234</a>
-                                    </li>
-                                    <li className="flex items-center gap-2">
-                                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                                        <a href="#" className="hover:underline text-primary">NIST Vulnerability Database</a>
-                                    </li>
+                                    {references.length > 0 ? (
+                                        references.map((ref: any, i: number) => (
+                                            <li key={i} className="flex items-center gap-2 overflow-hidden">
+                                                <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" />
+                                                <a href={ref.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary truncate block w-full">
+                                                    {ref.source || "Reference Link"}
+                                                </a>
+                                            </li>
+                                        ))
+                                    ) : (
+                                        <li className="text-muted-foreground">No references available.</li>
+                                    )}
                                 </ul>
                             </div>
                         </CardContent>
@@ -401,21 +396,25 @@ export default function VulnerabilityDetailsPage({ params }: { params: { id: str
                             <CardTitle className="text-base">Proposed Mitigations</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            {mockMitigations.map((mitigation) => (
-                                <div key={mitigation.step} className="relative pl-4 border-l-2 border-muted pb-1 last:pb-0">
-                                    <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-primary text-[10px] text-primary-foreground flex items-center justify-center font-bold">
-                                        {mitigation.step}
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-semibold leading-none">{mitigation.title}</p>
-                                        <p className="text-xs text-muted-foreground">{mitigation.desc}</p>
-                                        <div className="flex gap-2 pt-1">
-                                            <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">{mitigation.priority} Priority</Badge>
-                                            <span className="text-[10px] text-muted-foreground flex items-center">ETA: {mitigation.eta}</span>
+                            {mitigations.length > 0 ? (
+                                mitigations.map((mitigation: any) => (
+                                    <div key={mitigation.step} className="relative pl-4 border-l-2 border-muted pb-1 last:pb-0">
+                                        <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-primary text-[10px] text-primary-foreground flex items-center justify-center font-bold">
+                                            {mitigation.step}
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-semibold leading-none">{mitigation.title}</p>
+                                            <p className="text-xs text-muted-foreground">{mitigation.desc}</p>
+                                            <div className="flex gap-2 pt-1">
+                                                <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">{mitigation.priority} Priority</Badge>
+                                                <span className="text-[10px] text-muted-foreground flex items-center">ETA: {mitigation.eta}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                <p className="text-sm text-muted-foreground">No mitigation steps available.</p>
+                            )}
                         </CardContent>
                     </Card>
 

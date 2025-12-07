@@ -60,6 +60,8 @@ export async function getVulnerability(id: string) {
     }
 }
 
+import { fetchCVEData } from "./nvd"
+
 export async function createVulnerability(data: any) {
     const session = await getServerSession(authOptions)
 
@@ -68,12 +70,24 @@ export async function createVulnerability(data: any) {
     }
 
     try {
+        let nvdData: any = {}
+        if (data.cveId) {
+            const fetched = await fetchCVEData(data.cveId)
+            if (fetched) {
+                nvdData = fetched
+            }
+        }
+
         const vuln = await prisma.vulnerability.create({
             data: {
                 title: data.title,
-                description: data.description,
+                description: nvdData.description || data.description,
                 severity: data.severity,
                 status: data.status,
+                cveId: data.cveId,
+                cvssScore: nvdData.cvssScore,
+                references: nvdData.references,
+                affectedSystems: nvdData.affectedSystems,
                 userId: session.user.id,
                 dread: data.dread ? {
                     create: data.dread
