@@ -167,7 +167,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                                     Automate your DREAD and CVSS scoring with our comprehensive vulnerability management platform.
                                 </p>
                                 <Button className="w-full" size="sm">
-                                    View Dashboard
+                                    Get Started
                                 </Button>
                             </div>
                         </div>

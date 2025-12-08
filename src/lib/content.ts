@@ -234,7 +234,7 @@ Injection occurs when untrusted data is sent to an interpreter as part of a comm
 
 This is a new category for 2021, focusing on risks related to design flaws. If we want to "shift left" as an industry, it calls for more use of threat modeling, secure design patterns, and reference architectures.
 
-> ** distinction**: An insecure design cannot be fixed by a perfect implementation as by definition, needed security controls were never created to defend against specific attacks.
+> **Distinction**: An insecure design cannot be fixed by a perfect implementation as by definition, needed security controls were never created to defend against specific attacks.
 
 ## A05:2021 – Security Misconfiguration
 
