@@ -247,7 +247,7 @@ function MockupInterface() {
                                         <FileText className="h-8 w-8 text-primary animate-bounce" />
                                     </div>
                                     <h3 className="text-lg font-bold">Generating Report...</h3>
-                                    <p className="text-xs text-muted-foreground">Compiling security analysis for Q3 2024</p>
+                                    <p className="text-xs text-muted-foreground">Compiling security analysis for Q3 2025</p>
                                 </div>
                                 <div className="w-64 space-y-2">
                                     <div className="flex justify-between text-[10px] text-muted-foreground">
@@ -534,7 +534,7 @@ export function LandingPage() {
                 <div className="container mx-auto px-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex items-center gap-2">
                         <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-sm font-semibold text-muted-foreground">VulnTrack &copy; 2024</span>
+                        <span className="text-sm font-semibold text-muted-foreground">VulnTrack &copy; 2025</span>
                     </div>
                     <div className="flex gap-6 text-sm text-muted-foreground">
                         <Link href="#" className="hover:text-foreground transition-colors">Privacy Policy</Link>
