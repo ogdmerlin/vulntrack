@@ -309,6 +309,25 @@ export async function approveVulnerability(id: string) {
     }
 
     try {
+        // Authorization: Verify Admin belongs to the same team as the vulnerability
+        const admin = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { teamId: true }
+        })
+
+        const existingVuln = await prisma.vulnerability.findUnique({
+            where: { id },
+            select: { teamId: true, title: true } // Need title for audit log
+        })
+
+        if (!existingVuln) {
+            return { success: false, error: "Vulnerability not found" }
+        }
+
+        if (!admin?.teamId || admin.teamId !== existingVuln.teamId) {
+            return { success: false, error: "Unauthorized access to vulnerability" }
+        }
+
         const vulnerability = await prisma.vulnerability.update({
             where: { id },
             data: { approvalStatus: 'APPROVED' }

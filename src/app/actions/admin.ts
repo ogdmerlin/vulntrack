@@ -52,6 +52,17 @@ export async function getUsers() {
 export async function createUser(data: any) {
     try {
         const session = await checkAdmin()
+
+        // Fetch Admin's Team ID to assign to new user
+        const admin = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { teamId: true }
+        })
+
+        if (!admin?.teamId) {
+            return { success: false, error: "Admin must belong to a team to create users." }
+        }
+
         const hashedPassword = await hash(data.password, 12)
         const user = await prisma.user.create({
             data: {
@@ -61,7 +72,8 @@ export async function createUser(data: any) {
                 role: data.role,
                 status: data.status,
                 isOnboarded: true, // Auto-onboard admin created users
-                createdById: session.user.id
+                createdById: session.user.id,
+                teamId: admin.teamId // Assign to Admin's team
             }
         })
         await logAudit("CREATE_USER", "User", user.id, `User created by ${session.user.email}`)
@@ -82,6 +94,14 @@ export async function createUser(data: any) {
 export async function updateUser(userId: string, data: any) {
     const session = await checkAdmin()
     try {
+        // Authorization: Verify Admin and Target User are in the same team
+        const admin = await prisma.user.findUnique({ where: { id: session.user.id }, select: { teamId: true } })
+        const targetUser = await prisma.user.findUnique({ where: { id: userId }, select: { teamId: true } })
+
+        if (!admin?.teamId || !targetUser || admin.teamId !== targetUser.teamId) {
+            return { success: false, error: "Unauthorized access to user" }
+        }
+
         // Prepare update data, remove password if empty
         const updateData: any = {
             name: data.name,
@@ -105,8 +125,16 @@ export async function updateUser(userId: string, data: any) {
 }
 
 export async function updateUserRole(userId: string, role: string) {
-    await checkAdmin()
+    const session = await checkAdmin()
     try {
+        // Authorization: Verify Admin and Target User are in the same team
+        const admin = await prisma.user.findUnique({ where: { id: session.user.id }, select: { teamId: true } })
+        const targetUser = await prisma.user.findUnique({ where: { id: userId }, select: { teamId: true } })
+
+        if (!admin?.teamId || !targetUser || admin.teamId !== targetUser.teamId) {
+            return { success: false, error: "Unauthorized access to user" }
+        }
+
         await prisma.user.update({
             where: { id: userId },
             data: { role }
@@ -120,8 +148,16 @@ export async function updateUserRole(userId: string, role: string) {
 }
 
 export async function deleteUser(userId: string) {
-    await checkAdmin()
+    const session = await checkAdmin()
     try {
+        // Authorization: Verify Admin and Target User are in the same team
+        const admin = await prisma.user.findUnique({ where: { id: session.user.id }, select: { teamId: true } })
+        const targetUser = await prisma.user.findUnique({ where: { id: userId }, select: { teamId: true } })
+
+        if (!admin?.teamId || !targetUser || admin.teamId !== targetUser.teamId) {
+            return { success: false, error: "Unauthorized access to user" }
+        }
+
         await prisma.user.delete({
             where: { id: userId }
         })
