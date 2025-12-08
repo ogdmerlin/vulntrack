@@ -107,11 +107,33 @@ export async function importCve(cveId: string) {
             })).slice(0, 5)
         }
 
-        // Configurations (Complex parsing, simplified here)
-        // VulnCheck returns raw configurations, checking cpeMatch
+        // configurations
         if (cveData.configurations) {
-            // Basic extraction logic would go here
-            // For now, placeholder or deep parsing
+            cveData.configurations.forEach((config: any) => {
+                if (config.nodes) {
+                    config.nodes.forEach((node: any) => {
+                        if (node.cpeMatch) {
+                            node.cpeMatch.forEach((match: any) => {
+                                if (match.vulnerable && match.criteria) {
+                                    // Extract readable name from CPE if possible, or use criteria
+                                    // CPE format: cpe:2.3:a:vendor:product:version:...
+                                    const parts = match.criteria.split(':')
+                                    if (parts.length >= 5) {
+                                        const vendor = parts[3]
+                                        const product = parts[4]
+                                        const version = parts[5] !== '*' ? parts[5] : ''
+                                        affectedSystems.push(`${vendor} ${product} ${version}`.trim())
+                                    } else {
+                                        affectedSystems.push(match.criteria)
+                                    }
+                                }
+                            })
+                        }
+                    })
+                }
+            })
+            // Deduplicate
+            affectedSystems = Array.from(new Set(affectedSystems)).slice(0, 10) // Limit to top 10
         }
 
     } else {
