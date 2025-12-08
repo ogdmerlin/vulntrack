@@ -413,7 +413,7 @@ export default function VulnerabilitiesPage() {
                                     <TableCell>
                                         <div>
                                             <p className="text-sm font-medium">
-                                                {vuln.asset || "app.vulntrack.com"}
+                                                {vuln.asset || "System Asset"}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
                                                 Web Application

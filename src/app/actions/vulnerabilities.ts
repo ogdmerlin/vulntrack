@@ -135,6 +135,18 @@ export async function createVulnerability(data: any) {
 
         if (!user) return { success: false, error: "User not found" }
 
+        // Self-heal: Ensure Admin has a team
+        if (!user.teamId && user.role === 'ADMIN') {
+            const newTeam = await prisma.team.create({
+                data: { name: "My Organization" }
+            })
+            await prisma.user.update({
+                where: { id: session.user.id },
+                data: { teamId: newTeam.id }
+            })
+            user.teamId = newTeam.id
+        }
+
         let nvdData: any = {}
         if (data.cveId) {
             // Use the robust hybrid import (VulnCheck + NIST)
@@ -149,22 +161,70 @@ export async function createVulnerability(data: any) {
         // Prepare simplified references for DB if needed, but importCve returns stringified JSON already
         // nvdData.references and affectedSystems are ALREADY JSON strings from importCve
 
+        // Check for duplicates within the team
+        const existingVuln = await prisma.vulnerability.findFirst({
+            where: {
+                cveId: data.cveId,
+                teamId: user.teamId
+            }
+        })
+
+        if (existingVuln) {
+            return { success: false, error: "This CVE has already been imported for your team." }
+        }
+
+        // Derive Asset from Affected Systems
+        let assetName = "Unknown Asset"
+        if (nvdData.affectedSystems) {
+            try {
+                const systems = JSON.parse(nvdData.affectedSystems)
+                if (Array.isArray(systems) && systems.length > 0) {
+                    // Extract product name from CPE or usage string
+                    // e.g. "cpe:2.3:a:vendor:product:..." -> product
+                    // But current logic might just be returning "vendor product". Use first item.
+                    assetName = systems[0]
+                }
+            } catch (e) {
+                // Keep default
+            }
+        }
+
+        // Generate Default Mitigations if not present
+        const defaultMitigations = JSON.stringify([
+            {
+                step: 1,
+                title: "Review Vendor Advisory",
+                desc: "Check the official vendor advisory for specific patch instructions and affected versions.",
+                priority: "High",
+                eta: "1 day"
+            },
+            {
+                step: 2,
+                title: "Apply Security Patches",
+                desc: "Update the affected software to the latest secure version provided by the vendor.",
+                priority: "Critical",
+                eta: "3 days"
+            }
+        ])
+
         const vuln = await prisma.vulnerability.create({
             data: {
                 title: nvdData.title || data.title,
                 description: nvdData.description || data.description,
-                severity: data.severity, // User provided or infer?
-                status: data.status,
+                severity: data.severity,
+                status: "OPEN", // Force OPEN on creation
                 cveId: data.cveId,
                 cvssScore: nvdData.cvssScore,
                 references: nvdData.references,
                 affectedSystems: nvdData.affectedSystems,
+                asset: assetName, // Save derived asset
+                mitigations: defaultMitigations, // Save default mitigations
                 userId: session.user.id,
-                teamId: user.teamId, // Assign to team
+                teamId: user.teamId,
                 approvalStatus: approvalStatus,
                 dread: data.dread ? {
                     create: data.dread
-                } : (nvdData.dread ? { create: nvdData.dread } : undefined), // Use derived DREAD if user didn't provide one
+                } : (nvdData.dread ? { create: nvdData.dread } : undefined),
                 stride: data.stride ? {
                     create: data.stride
                 } : undefined,
@@ -405,10 +465,22 @@ export async function getTeamMembers() {
     try {
         const user = await prisma.user.findUnique({
             where: { id: session.user.id },
-            select: { teamId: true }
+            select: { id: true, name: true, email: true, teamId: true, role: true }
         })
 
         if (!user?.teamId) {
+            // Self-heal: If Admin has no team, create one
+            if (user?.role === 'ADMIN') {
+                const newTeam = await prisma.team.create({
+                    data: { name: "My Organization" }
+                })
+                await prisma.user.update({
+                    where: { id: session.user.id },
+                    data: { teamId: newTeam.id }
+                })
+                // Return the user as the single member for now
+                return { success: true, data: [{ id: user.id, name: user.name, email: user.email, role: user.role }] }
+            }
             return { success: true, data: [] }
         }
 

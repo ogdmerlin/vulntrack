@@ -345,7 +345,7 @@ export default function VulnerabilityDetailsPage({ params }: { params: { id: str
                                 ))
                             ) : (
                                 <p className="text-sm text-muted-foreground p-4 border rounded-lg bg-muted/20">
-                                    No affected systems data available from NVD.
+                                    No affected systems data available.
                                 </p>
                             )}
                         </div>
