@@ -21,8 +21,8 @@ interface Notification {
     title: string
     message: string
     read: boolean
-    link?: string
-    createdAt: string
+    link?: string | null
+    createdAt: Date | string
 }
 
 export function NotificationDropdown() {
