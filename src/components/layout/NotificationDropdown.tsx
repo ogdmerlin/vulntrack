@@ -92,8 +92,8 @@ export function NotificationDropdown() {
         }
     }
 
-    function getTimeAgo(dateString: string) {
-        const date = new Date(dateString)
+    function getTimeAgo(dateInput: string | Date) {
+        const date = new Date(dateInput)
         const now = new Date()
         const diffMs = now.getTime() - date.getTime()
         const diffMins = Math.floor(diffMs / 60000)
