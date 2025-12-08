@@ -169,7 +169,7 @@ export default function MisconfigurationsPage() {
                         ) : misconfigurations.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="h-24 text-center">
-                                    No misconfigurations found. Click "Add Misconfiguration" to create one.
+                                    No misconfigurations found. Click &quot;Add Misconfiguration&quot; to create one.
                                 </TableCell>
                             </TableRow>
                         ) : (
