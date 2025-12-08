@@ -205,18 +205,24 @@ export async function consolidateWorkspace() {
         // For this specific recovery, we will move ALL users to this team.
         // WARNING: This assumes single-tenant or single-workspace intent.
 
+        // Move all users without a team or in a different team to this team.
         await prisma.user.updateMany({
             where: {
-                teamId: { not: teamId }
+                OR: [
+                    { teamId: { not: teamId } },
+                    { teamId: null }
+                ]
             },
             data: { teamId: teamId }
         })
 
-        // Also move orphan vulnerabilities?
-        // If users move, their vulns should probably move too if they want to see them.
+        // Also move orphan vulnerabilities
         await prisma.vulnerability.updateMany({
             where: {
-                teamId: { not: teamId }
+                OR: [
+                    { teamId: { not: teamId } },
+                    { teamId: null }
+                ]
             },
             data: { teamId: teamId }
         })
