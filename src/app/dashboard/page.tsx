@@ -225,7 +225,7 @@ export default async function DashboardPage() {
                                                     {vuln.title}
                                                 </Link>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {vuln.asset || "app.vulntrack.com"}
+                                                    {vuln.asset || "System Asset"}
                                                 </p>
                                             </div>
                                         </div>
@@ -245,20 +245,7 @@ export default async function DashboardPage() {
                             )}
                         </div>
 
-                        {/* Pagination indicator */}
-                        {recentVulns.length > 0 && (
-                            <div className="flex items-center justify-center gap-4 pt-4 mt-4 border-t">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" disabled>
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                <span className="text-sm text-muted-foreground">
-                                    1 / {Math.ceil(totalVulns / 5)}
-                                </span>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" disabled={totalVulns <= 5}>
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
+
                     </CardContent>
                 </Card>
 
@@ -268,12 +255,7 @@ export default async function DashboardPage() {
                         <CardTitle>Quick Actions</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                        <Link href="/dashboard/vulnerabilities/new">
-                            <Button variant="outline" className="w-full justify-start gap-3 h-12">
-                                <Play className="h-4 w-4" />
-                                Start New Scan
-                            </Button>
-                        </Link>
+
                         <Link href="/dashboard/reports">
                             <Button variant="outline" className="w-full justify-start gap-3 h-12">
                                 <FileText className="h-4 w-4" />
