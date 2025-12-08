@@ -322,6 +322,15 @@ export default function ReportsPage() {
         link.click()
     }
 
+    function escapeHtml(unsafe: string) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     async function generateHTMLReport(name: string, vulns: Vulnerability[], preview = false) {
         const critical = vulns.filter(v => v.severity === "CRITICAL").length
         const high = vulns.filter(v => v.severity === "HIGH").length
@@ -334,7 +343,7 @@ export default function ReportsPage() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${name}</title>
+    <title>${escapeHtml(name)}</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f8fafc; }
         h1 { color: #1e293b; } h2 { color: #475569; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
@@ -353,7 +362,7 @@ export default function ReportsPage() {
 </head>
 <body>
     <h1>VulnTrack Security Report</h1>
-    <p style="color:#64748b;">${name} • Generated: ${new Date().toLocaleString()}</p>
+    <p style="color:#64748b;">${escapeHtml(name)} • Generated: ${new Date().toLocaleString()}</p>
     
     <div class="stats">
         <div class="stat"><h3>Critical</h3><p class="critical">${critical}</p></div>
@@ -368,9 +377,9 @@ export default function ReportsPage() {
         <tbody>
             ${vulns.map(v => `
                 <tr>
-                    <td>${v.title}</td>
-                    <td><span class="badge badge-${v.severity.toLowerCase()}">${v.severity}</span></td>
-                    <td>${v.status}</td>
+                    <td>${escapeHtml(v.title)}</td>
+                    <td><span class="badge badge-${escapeHtml(v.severity.toLowerCase())}">${escapeHtml(v.severity)}</span></td>
+                    <td>${escapeHtml(v.status)}</td>
                     <td>${v.dread?.total?.toFixed(1) || "N/A"}</td>
                     <td>${new Date(v.createdAt).toLocaleDateString()}</td>
                 </tr>
