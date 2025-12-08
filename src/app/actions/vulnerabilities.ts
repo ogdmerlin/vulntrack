@@ -118,7 +118,7 @@ export async function getVulnerability(id: string) {
     }
 }
 
-import { fetchCVEData } from "./nvd"
+import { importCve } from "./cve"
 
 export async function createVulnerability(data: any) {
     const session = await getServerSession(authOptions)
@@ -137,19 +137,23 @@ export async function createVulnerability(data: any) {
 
         let nvdData: any = {}
         if (data.cveId) {
-            const fetched = await fetchCVEData(data.cveId)
-            if (fetched) {
-                nvdData = fetched
+            // Use the robust hybrid import (VulnCheck + NIST)
+            const result = await importCve(data.cveId)
+            if (result.success && result.data) {
+                nvdData = result.data
             }
         }
 
         const approvalStatus = user.role === 'ADMIN' ? 'APPROVED' : 'PENDING'
 
+        // Prepare simplified references for DB if needed, but importCve returns stringified JSON already
+        // nvdData.references and affectedSystems are ALREADY JSON strings from importCve
+
         const vuln = await prisma.vulnerability.create({
             data: {
-                title: data.title,
+                title: nvdData.title || data.title,
                 description: nvdData.description || data.description,
-                severity: data.severity,
+                severity: data.severity, // User provided or infer?
                 status: data.status,
                 cveId: data.cveId,
                 cvssScore: nvdData.cvssScore,
@@ -160,7 +164,7 @@ export async function createVulnerability(data: any) {
                 approvalStatus: approvalStatus,
                 dread: data.dread ? {
                     create: data.dread
-                } : undefined,
+                } : (nvdData.dread ? { create: nvdData.dread } : undefined), // Use derived DREAD if user didn't provide one
                 stride: data.stride ? {
                     create: data.stride
                 } : undefined,
