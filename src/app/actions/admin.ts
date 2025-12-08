@@ -184,4 +184,48 @@ export async function createInvitation(email: string, role: string) {
         console.error("Create invitation error:", error)
         return { success: false, error: "Failed to create invitation" }
     }
+
+}
+
+export async function consolidateWorkspace() {
+    const session = await checkAdmin()
+    try {
+        const admin = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { teamId: true }
+        })
+
+        if (!admin?.teamId) {
+            return { success: false, error: "Admin has no team." }
+        }
+
+        const teamId = admin.teamId
+
+        // Move all users without a team (or in default team?) to this team.
+        // For this specific recovery, we will move ALL users to this team.
+        // WARNING: This assumes single-tenant or single-workspace intent.
+
+        await prisma.user.updateMany({
+            where: {
+                teamId: { not: teamId }
+            },
+            data: { teamId: teamId }
+        })
+
+        // Also move orphan vulnerabilities?
+        // If users move, their vulns should probably move too if they want to see them.
+        await prisma.vulnerability.updateMany({
+            where: {
+                teamId: { not: teamId }
+            },
+            data: { teamId: teamId }
+        })
+
+        revalidatePath('/dashboard')
+        revalidatePath('/dashboard/admin/users')
+        return { success: true, message: "Workspace consolidated successfully." }
+    } catch (error) {
+        console.error("Consolidate error:", error)
+        return { success: false, error: "Failed to consolidate workspace." }
+    }
 }

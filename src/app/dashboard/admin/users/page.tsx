@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from "react"
-import { getUsers, updateUserRole, deleteUser } from "@/app/actions/admin"
+import { getUsers, updateUserRole, deleteUser, consolidateWorkspace } from "@/app/actions/admin"
 import {
     Table,
     TableBody,
@@ -81,6 +81,20 @@ export default function AdminUsersPage() {
             setUsers(result.data)
         }
         setLoading(false)
+    }
+
+    async function handleConsolidate() {
+        if (confirm("This will consolidate all users and vulnerabilities into your current workspace. This matches all existing users to your Team ID. Proceed?")) {
+            setLoading(true)
+            const result = await consolidateWorkspace()
+            if (result.success) {
+                alert(result.message)
+                loadUsers()
+            } else {
+                alert(result.error)
+            }
+            setLoading(false)
+        }
     }
 
     // Handlers
@@ -254,6 +268,10 @@ export default function AdminUsersPage() {
                                 </SelectContent>
                             </Select>
 
+                            <Button variant="outline" className="gap-2" onClick={handleConsolidate}>
+                                <Database className="h-4 w-4" />
+                                Fix Workspace Isolation
+                            </Button>
                             <Button variant="outline" className="gap-2">
                                 <Filter className="h-4 w-4" />
                                 Filters
