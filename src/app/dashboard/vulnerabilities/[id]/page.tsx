@@ -117,19 +117,9 @@ export default function VulnerabilityDetailsPage({ params }: { params: { id: str
     }
 
     function handleShare() {
+        // Prefer copying link to clipboard over native share to avoid "applemacbook share stuff"
         const url = window.location.href
-        if (navigator.share) {
-            navigator.share({
-                title: vuln?.title || "Vulnerability Details",
-                text: `Check out this vulnerability: ${vuln?.title}`,
-                url: url
-            }).catch(() => {
-                // Fallback to clipboard
-                copyToClipboard(url)
-            })
-        } else {
-            copyToClipboard(url)
-        }
+        copyToClipboard(url)
     }
 
     function copyToClipboard(text: string) {

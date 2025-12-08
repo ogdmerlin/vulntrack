@@ -211,7 +211,7 @@ export default function ReportsPage() {
         }
     }
 
-    async function generatePDFReport(name: string, vulns: Vulnerability[]) {
+    async function generatePDFReport(name: string, vulns: Vulnerability[], preview = false) {
         const doc = new jsPDF()
 
         // Header
@@ -292,6 +292,9 @@ export default function ReportsPage() {
             })
         }
 
+        if (preview) {
+            return doc.output('bloburl')
+        }
         doc.save(`${name.replace(/[^a-z0-9]/gi, '_')}.pdf`)
     }
 
@@ -319,7 +322,7 @@ export default function ReportsPage() {
         link.click()
     }
 
-    async function generateHTMLReport(name: string, vulns: Vulnerability[]) {
+    async function generateHTMLReport(name: string, vulns: Vulnerability[], preview = false) {
         const critical = vulns.filter(v => v.severity === "CRITICAL").length
         const high = vulns.filter(v => v.severity === "HIGH").length
         const medium = vulns.filter(v => v.severity === "MEDIUM").length
@@ -378,8 +381,14 @@ export default function ReportsPage() {
 </html>`
 
         const blob = new Blob([htmlContent], { type: "text/html" })
+        const url = URL.createObjectURL(blob)
+
+        if (preview) {
+            return url
+        }
+
         const link = document.createElement("a")
-        link.href = URL.createObjectURL(blob)
+        link.href = url
         link.download = `${name.replace(/[^a-z0-9]/gi, '_')}.html`
         link.click()
     }
@@ -417,39 +426,30 @@ export default function ReportsPage() {
         }
     }
 
-    function viewReport(report: GeneratedReport) {
-        // For HTML reports, open in new tab. For others, download.
+    async function viewReport(report: GeneratedReport) {
+        // Open preview in new tab
         const filteredVulns = vulnerabilities
-        if (report.format === "HTML") {
-            const critical = filteredVulns.filter(v => v.severity === "CRITICAL").length
-            const high = filteredVulns.filter(v => v.severity === "HIGH").length
-            const medium = filteredVulns.filter(v => v.severity === "MEDIUM").length
-            const low = filteredVulns.filter(v => v.severity === "LOW").length
+        let url: any = ""
 
-            const htmlContent = `<!DOCTYPE html><html><head><title>${report.name}</title><style>body{font-family:system-ui,sans-serif;max-width:1200px;margin:0 auto;padding:20px;background:#f8fafc}h1{color:#1e293b}h2{color:#475569;border-bottom:2px solid #e2e8f0;padding-bottom:10px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin:20px 0}.stat{background:white;padding:20px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1)}.stat h3{margin:0;color:#64748b;font-size:14px}.stat p{margin:5px 0 0;font-size:32px;font-weight:bold}.critical{color:#dc2626}.high{color:#ea580c}.medium{color:#ca8a04}.low{color:#2563eb}table{width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1)}th{background:#1e293b;color:white;padding:12px;text-align:left}td{padding:12px;border-bottom:1px solid #e2e8f0}</style></head><body><h1>VulnTrack Security Report</h1><p style="color:#64748b">${report.name} • Generated: ${report.dateGenerated.toLocaleString()}</p><div class="stats"><div class="stat"><h3>Critical</h3><p class="critical">${critical}</p></div><div class="stat"><h3>High</h3><p class="high">${high}</p></div><div class="stat"><h3>Medium</h3><p class="medium">${medium}</p></div><div class="stat"><h3>Low</h3><p class="low">${low}</p></div></div><h2>Vulnerability Details</h2><table><thead><tr><th>Title</th><th>Severity</th><th>Status</th><th>DREAD</th><th>Date</th></tr></thead><tbody>${filteredVulns.map(v => `<tr><td>${v.title}</td><td>${v.severity}</td><td>${v.status}</td><td>${v.dread?.total?.toFixed(1) || "N/A"}</td><td>${new Date(v.createdAt).toLocaleDateString()}</td></tr>`).join('')}</tbody></table></body></html>`
-            const blob = new Blob([htmlContent], { type: "text/html" })
-            const url = URL.createObjectURL(blob)
-            window.open(url, '_blank')
+        if (report.format === "HTML") {
+            url = await generateHTMLReport(report.name, filteredVulns, true)
+        } else if (report.format === "PDF") {
+            url = await generatePDFReport(report.name, filteredVulns, true)
         } else {
+            // CSV cannot be easily previewed in browser as a document, fallback to download
             downloadReport(report)
+            return
+        }
+
+        if (url) {
+            window.open(url as string, '_blank')
         }
     }
 
     function shareReport(report: GeneratedReport) {
         const shareText = `VulnTrack Report: ${report.name} (${report.vulnerabilityCount} vulnerabilities) - Generated ${report.dateGenerated.toLocaleDateString()}`
-        if (navigator.share) {
-            navigator.share({
-                title: report.name,
-                text: shareText,
-            }).catch(() => {
-                // Fallback to clipboard
-                navigator.clipboard.writeText(shareText)
-                showToast('Report details copied to clipboard')
-            })
-        } else {
-            navigator.clipboard.writeText(shareText)
-            showToast('Report details copied to clipboard')
-        }
+        navigator.clipboard.writeText(shareText)
+        showToast('Report details copied to clipboard')
     }
 
     function deleteReport(reportId: string) {
