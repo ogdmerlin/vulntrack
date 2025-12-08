@@ -113,6 +113,7 @@ export default function ImportCvePage() {
         setImporting(true)
 
         const result = await createVulnerability({
+            cveId: cveId,
             title: previewData.title,
             description: previewData.description,
             severity: "HIGH",
