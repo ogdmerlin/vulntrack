@@ -88,6 +88,12 @@ export default function ReportsPage() {
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 5
 
+    // Preview modal state
+    const [showPreviewModal, setShowPreviewModal] = useState(false)
+
+    // Toast state
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
     useEffect(() => {
         loadData()
     }, [])
@@ -115,6 +121,17 @@ export default function ReportsPage() {
         } finally {
             setLoading(false)
         }
+    }
+
+    // Show toast message
+    function showToast(message: string, type: 'success' | 'error' = 'success') {
+        setToast({ message, type })
+        setTimeout(() => setToast(null), 3000)
+    }
+
+    // Scroll to form section
+    function scrollToForm() {
+        document.getElementById('generate-report-form')?.scrollIntoView({ behavior: 'smooth' })
     }
 
     // Filter vulnerabilities based on selections
@@ -390,6 +407,7 @@ export default function ReportsPage() {
     function downloadReport(report: GeneratedReport) {
         // Re-generate the report
         const filteredVulns = vulnerabilities
+        showToast(`Downloading ${report.name}...`)
         if (report.format === "PDF") {
             generatePDFReport(report.name, filteredVulns)
         } else if (report.format === "CSV") {
@@ -397,6 +415,67 @@ export default function ReportsPage() {
         } else if (report.format === "HTML") {
             generateHTMLReport(report.name, filteredVulns)
         }
+    }
+
+    function viewReport(report: GeneratedReport) {
+        // For HTML reports, open in new tab. For others, download.
+        const filteredVulns = vulnerabilities
+        if (report.format === "HTML") {
+            const critical = filteredVulns.filter(v => v.severity === "CRITICAL").length
+            const high = filteredVulns.filter(v => v.severity === "HIGH").length
+            const medium = filteredVulns.filter(v => v.severity === "MEDIUM").length
+            const low = filteredVulns.filter(v => v.severity === "LOW").length
+
+            const htmlContent = `<!DOCTYPE html><html><head><title>${report.name}</title><style>body{font-family:system-ui,sans-serif;max-width:1200px;margin:0 auto;padding:20px;background:#f8fafc}h1{color:#1e293b}h2{color:#475569;border-bottom:2px solid #e2e8f0;padding-bottom:10px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin:20px 0}.stat{background:white;padding:20px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1)}.stat h3{margin:0;color:#64748b;font-size:14px}.stat p{margin:5px 0 0;font-size:32px;font-weight:bold}.critical{color:#dc2626}.high{color:#ea580c}.medium{color:#ca8a04}.low{color:#2563eb}table{width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1)}th{background:#1e293b;color:white;padding:12px;text-align:left}td{padding:12px;border-bottom:1px solid #e2e8f0}</style></head><body><h1>VulnTrack Security Report</h1><p style="color:#64748b">${report.name} • Generated: ${report.dateGenerated.toLocaleString()}</p><div class="stats"><div class="stat"><h3>Critical</h3><p class="critical">${critical}</p></div><div class="stat"><h3>High</h3><p class="high">${high}</p></div><div class="stat"><h3>Medium</h3><p class="medium">${medium}</p></div><div class="stat"><h3>Low</h3><p class="low">${low}</p></div></div><h2>Vulnerability Details</h2><table><thead><tr><th>Title</th><th>Severity</th><th>Status</th><th>DREAD</th><th>Date</th></tr></thead><tbody>${filteredVulns.map(v => `<tr><td>${v.title}</td><td>${v.severity}</td><td>${v.status}</td><td>${v.dread?.total?.toFixed(1) || "N/A"}</td><td>${new Date(v.createdAt).toLocaleDateString()}</td></tr>`).join('')}</tbody></table></body></html>`
+            const blob = new Blob([htmlContent], { type: "text/html" })
+            const url = URL.createObjectURL(blob)
+            window.open(url, '_blank')
+        } else {
+            downloadReport(report)
+        }
+    }
+
+    function shareReport(report: GeneratedReport) {
+        const shareText = `VulnTrack Report: ${report.name} (${report.vulnerabilityCount} vulnerabilities) - Generated ${report.dateGenerated.toLocaleDateString()}`
+        if (navigator.share) {
+            navigator.share({
+                title: report.name,
+                text: shareText,
+            }).catch(() => {
+                // Fallback to clipboard
+                navigator.clipboard.writeText(shareText)
+                showToast('Report details copied to clipboard')
+            })
+        } else {
+            navigator.clipboard.writeText(shareText)
+            showToast('Report details copied to clipboard')
+        }
+    }
+
+    function deleteReport(reportId: string) {
+        const updatedReports = generatedReports.filter(r => r.id !== reportId)
+        setGeneratedReports(updatedReports)
+        localStorage.setItem('vulntrack_reports', JSON.stringify(updatedReports))
+        showToast('Report deleted')
+    }
+
+    function saveTemplate() {
+        const template = {
+            id: `template-${Date.now()}`,
+            name: reportName || getDefaultReportName(),
+            type: reportType,
+            format: reportFormat,
+            severityFilter,
+            includeSections,
+            savedAt: new Date().toISOString()
+        }
+        const existingTemplates = JSON.parse(localStorage.getItem('vulntrack_templates') || '[]')
+        localStorage.setItem('vulntrack_templates', JSON.stringify([template, ...existingTemplates]))
+        showToast('Template saved successfully')
+    }
+
+    function openPreview() {
+        setShowPreviewModal(true)
     }
 
     const previewVulns = getFilteredVulnerabilities()
@@ -411,6 +490,90 @@ export default function ReportsPage() {
 
     return (
         <div className="space-y-6">
+            {/* Toast Notification */}
+            {toast && (
+                <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg flex items-center gap-2 ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+                    }`}>
+                    {toast.message}
+                </div>
+            )}
+
+            {/* Preview Modal */}
+            {showPreviewModal && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg max-w-4xl w-full max-h-[80vh] overflow-auto">
+                        <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold">Report Preview</h3>
+                            <Button variant="ghost" size="icon" onClick={() => setShowPreviewModal(false)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <div className="p-6">
+                            <div className="space-y-4">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-slate-900">{reportName || getDefaultReportName()}</h2>
+                                    <p className="text-muted-foreground">Generated: {new Date().toLocaleString()}</p>
+                                </div>
+
+                                {includeSections.executiveSummary && (
+                                    <div className="border rounded-lg p-4">
+                                        <h4 className="font-semibold mb-2">Executive Summary</h4>
+                                        <p className="text-sm text-muted-foreground">
+                                            This report covers {previewVulns.length} vulnerabilities.
+                                            Critical: {previewVulns.filter(v => v.severity === "CRITICAL").length} |
+                                            High: {previewVulns.filter(v => v.severity === "HIGH").length} |
+                                            Medium: {previewVulns.filter(v => v.severity === "MEDIUM").length} |
+                                            Low: {previewVulns.filter(v => v.severity === "LOW").length}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {includeSections.vulnerabilityDetails && (
+                                    <div className="border rounded-lg overflow-hidden">
+                                        <table className="w-full text-sm">
+                                            <thead className="bg-slate-100">
+                                                <tr>
+                                                    <th className="text-left p-3">Title</th>
+                                                    <th className="text-left p-3">Severity</th>
+                                                    <th className="text-left p-3">Status</th>
+                                                    <th className="text-left p-3">DREAD</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {previewVulns.slice(0, 5).map(v => (
+                                                    <tr key={v.id} className="border-t">
+                                                        <td className="p-3">{v.title}</td>
+                                                        <td className="p-3">
+                                                            <Badge variant="outline">{v.severity}</Badge>
+                                                        </td>
+                                                        <td className="p-3">{v.status}</td>
+                                                        <td className="p-3">{v.dread?.total?.toFixed(1) || "N/A"}</td>
+                                                    </tr>
+                                                ))}
+                                                {previewVulns.length > 5 && (
+                                                    <tr className="border-t bg-slate-50">
+                                                        <td colSpan={4} className="p-3 text-center text-muted-foreground">
+                                                            ... and {previewVulns.length - 5} more vulnerabilities
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="sticky bottom-0 bg-white border-t p-4 flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setShowPreviewModal(false)}>Close</Button>
+                            <Button onClick={() => { setShowPreviewModal(false); generateReport(); }} className="bg-slate-900 hover:bg-slate-800">
+                                <Download className="mr-2 h-4 w-4" />
+                                Generate Report
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
@@ -420,18 +583,18 @@ export default function ReportsPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button className="bg-slate-900 text-white hover:bg-slate-800">
+                    <Button
+                        className="bg-slate-900 text-white hover:bg-slate-800"
+                        onClick={scrollToForm}
+                    >
                         <Plus className="mr-2 h-4 w-4" />
                         Generate Report
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                        <Bell className="h-5 w-5 text-muted-foreground" />
                     </Button>
                 </div>
             </div>
 
             {/* Generate New Report Card */}
-            <Card>
+            <Card id="generate-report-form">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <FileBarChart className="h-5 w-5" />
@@ -612,24 +775,34 @@ export default function ReportsPage() {
 
                             {/* Action Buttons */}
                             <Button
-                                className="w-full bg-slate-900 hover:bg-slate-800"
+                                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-base py-6"
                                 onClick={generateReport}
                                 disabled={generating || previewVulns.length === 0}
+                                size="lg"
                             >
                                 {generating ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                                 ) : (
-                                    <Settings2 className="mr-2 h-4 w-4" />
+                                    <Download className="mr-2 h-5 w-5" />
                                 )}
-                                Generate Report
+                                Generate & Download Report
                             </Button>
-                            <Button variant="outline" className="w-full" disabled={previewVulns.length === 0}>
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                disabled={previewVulns.length === 0}
+                                onClick={openPreview}
+                            >
                                 <Eye className="mr-2 h-4 w-4" />
-                                Preview
+                                Preview Report
                             </Button>
-                            <Button variant="outline" className="w-full">
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={saveTemplate}
+                            >
                                 <Save className="mr-2 h-4 w-4" />
-                                Save Template
+                                Save as Template
                             </Button>
                         </div>
                     </div>
@@ -724,14 +897,36 @@ export default function ReportsPage() {
                                                     size="icon"
                                                     className="h-8 w-8"
                                                     onClick={() => downloadReport(report)}
+                                                    title="Download"
                                                 >
-                                                    <Download className="h-4 w-4 text-muted-foreground" />
+                                                    <Download className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => viewReport(report)}
+                                                    title="View"
+                                                >
+                                                    <Eye className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <Share2 className="h-4 w-4 text-muted-foreground" />
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => shareReport(report)}
+                                                    title="Share"
+                                                >
+                                                    <Share2 className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => deleteReport(report.id)}
+                                                    title="Delete"
+                                                >
+                                                    <X className="h-4 w-4 text-muted-foreground hover:text-red-500" />
                                                 </Button>
                                             </div>
                                         </TableCell>

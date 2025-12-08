@@ -89,7 +89,8 @@ export async function getVulnerability(id: string) {
             where: { id },
             include: {
                 dread: true,
-                stride: true
+                stride: true,
+                assignedTo: { select: { id: true, name: true, email: true } }
             }
         })
 
@@ -321,5 +322,100 @@ export async function deleteVulnerability(id: string) {
     } catch (error) {
         console.error("Failed to delete vulnerability:", error)
         return { success: false, error: "Failed to delete vulnerability" }
+    }
+}
+
+export async function assignVulnerability(vulnerabilityId: string, assigneeId: string | null) {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" }
+    }
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { role: true, teamId: true }
+        })
+
+        if (user?.role !== 'ADMIN') {
+            return { success: false, error: "Only admins can assign vulnerabilities" }
+        }
+
+        const vulnerability = await prisma.vulnerability.findUnique({
+            where: { id: vulnerabilityId },
+            select: { teamId: true, title: true }
+        })
+
+        if (!vulnerability) {
+            return { success: false, error: "Vulnerability not found" }
+        }
+
+        // Make sure assignee is in the same team
+        if (assigneeId) {
+            const assignee = await prisma.user.findUnique({
+                where: { id: assigneeId },
+                select: { teamId: true, name: true }
+            })
+
+            if (!assignee || assignee.teamId !== vulnerability.teamId) {
+                return { success: false, error: "Assignee must be in the same team" }
+            }
+
+            // Create notification for the assignee
+            await prisma.notification.create({
+                data: {
+                    userId: assigneeId,
+                    type: "VULNERABILITY_ASSIGNED",
+                    title: "New Assignment",
+                    message: `You have been assigned to vulnerability: ${vulnerability.title}`,
+                    link: `/dashboard/vulnerabilities/${vulnerabilityId}`
+                }
+            })
+        }
+
+        await prisma.vulnerability.update({
+            where: { id: vulnerabilityId },
+            data: { assignedToId: assigneeId }
+        })
+
+        await logAudit("ASSIGN_VULNERABILITY", "Vulnerability", vulnerabilityId,
+            assigneeId ? `Assigned to user ${assigneeId}` : "Unassigned")
+
+        revalidatePath('/dashboard/vulnerabilities')
+        revalidatePath(`/dashboard/vulnerabilities/${vulnerabilityId}`)
+        return { success: true }
+    } catch (error) {
+        console.error("Failed to assign vulnerability:", error)
+        return { success: false, error: "Failed to assign vulnerability" }
+    }
+}
+
+export async function getTeamMembers() {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" }
+    }
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { teamId: true }
+        })
+
+        if (!user?.teamId) {
+            return { success: true, data: [] }
+        }
+
+        const members = await prisma.user.findMany({
+            where: { teamId: user.teamId },
+            select: { id: true, name: true, email: true, role: true }
+        })
+
+        return { success: true, data: members }
+    } catch (error) {
+        console.error("Failed to get team members:", error)
+        return { success: false, error: "Failed to get team members" }
     }
 }

@@ -33,9 +33,11 @@ model User {
   team          Team?     @relation(fields: [teamId], references: [id])
   
   vulnerabilities Vulnerability[]
+  assignedVulnerabilities Vulnerability[] @relation("AssignedVulnerabilities")
   auditLogs     AuditLog[]
   comments      Comment[]
   invitations   Invitation[]  @relation("UserInvitations")
+  notifications Notification[]
 }
 
 model Vulnerability {
@@ -50,6 +52,9 @@ model Vulnerability {
   
   teamId      String?
   team        Team?    @relation(fields: [teamId], references: [id])
+  
+  assignedToId String?
+  assignedTo   User?    @relation("AssignedVulnerabilities", fields: [assignedToId], references: [id])
   
   approvalStatus String @default("APPROVED") // PENDING, APPROVED, REJECTED
   
@@ -132,5 +137,17 @@ model Invitation {
   teamId    String?
   team      Team?    @relation(fields: [teamId], references: [id])
   
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String   // VULNERABILITY_ASSIGNED, STATUS_CHANGED, COMMENT_ADDED, etc.
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String?  // Optional link to navigate to
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }

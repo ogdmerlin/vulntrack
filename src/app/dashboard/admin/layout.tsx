@@ -3,8 +3,9 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Bell, UserPlus } from "lucide-react"
+import { UserPlus } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { NotificationDropdown } from "@/components/layout/NotificationDropdown"
 
 export default function AdminLayout({
     children,
@@ -43,10 +44,7 @@ export default function AdminLayout({
                         <UserPlus className="mr-2 h-4 w-4" />
                         Add User
                     </Button>
-                    <Button variant="ghost" size="icon" className="relative">
-                        <Bell className="h-5 w-5 text-muted-foreground" />
-                        <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500" />
-                    </Button>
+                    <NotificationDropdown />
                 </div>
             </div>
 

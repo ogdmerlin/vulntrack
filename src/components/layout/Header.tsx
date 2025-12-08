@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { NotificationDropdown } from "./NotificationDropdown"
 
 export function Header() {
     const { data: session } = useSession()
@@ -23,6 +24,7 @@ export function Header() {
         <header className="flex h-14 items-center justify-between border-b bg-card px-6">
             <h1 className="text-lg font-semibold">Dashboard</h1>
             <div className="flex items-center gap-4">
+                <NotificationDropdown />
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">

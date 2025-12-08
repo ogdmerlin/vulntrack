@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { getVulnerability, updateVulnerabilityStatus, approveVulnerability } from "@/app/actions/vulnerabilities"
+import { getVulnerability, updateVulnerabilityStatus, approveVulnerability, assignVulnerability, getTeamMembers } from "@/app/actions/vulnerabilities"
+import { useSession } from "next-auth/react"
 import {
     Loader2,
     Share,
@@ -39,6 +40,10 @@ export default function VulnerabilityDetailsPage({ params }: { params: { id: str
     const [error, setError] = useState("")
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
     const [notificationsEnabled, setNotificationsEnabled] = useState(true)
+    const [teamMembers, setTeamMembers] = useState<any[]>([])
+    const [assigneeLoading, setAssigneeLoading] = useState(false)
+    const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false)
+    const { data: session } = useSession()
 
     useEffect(() => {
         async function fetchVuln() {
@@ -52,7 +57,15 @@ export default function VulnerabilityDetailsPage({ params }: { params: { id: str
             setLoading(false)
         }
         fetchVuln()
+        loadTeamMembers()
     }, [params.id])
+
+    async function loadTeamMembers() {
+        const result = await getTeamMembers()
+        if (result.success && result.data) {
+            setTeamMembers(result.data)
+        }
+    }
 
     useEffect(() => {
         if (toast) {
@@ -421,11 +434,67 @@ export default function VulnerabilityDetailsPage({ params }: { params: { id: str
 
                             <div>
                                 <p className="text-xs font-medium text-muted-foreground mb-2">Assigned To</p>
-                                <div className="flex items-center gap-2">
-                                    <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center">
-                                        <User className="h-3 w-3" />
+                                <div className="relative">
+                                    <div
+                                        className={cn(
+                                            "flex items-center gap-2 p-2 rounded-md border",
+                                            session?.user?.role === 'ADMIN' ? "cursor-pointer hover:bg-muted" : ""
+                                        )}
+                                        onClick={() => session?.user?.role === 'ADMIN' && setShowAssigneeDropdown(!showAssigneeDropdown)}
+                                    >
+                                        <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center">
+                                            <User className="h-3 w-3" />
+                                        </div>
+                                        <span className="text-sm font-medium">
+                                            {vuln.assignedTo?.name || vuln.assignedTo?.email || "Unassigned"}
+                                        </span>
+                                        {session?.user?.role === 'ADMIN' && (
+                                            <span className="text-xs text-muted-foreground ml-auto">Click to change</span>
+                                        )}
                                     </div>
-                                    <span className="text-sm font-medium">Sarah Johnson</span>
+
+                                    {showAssigneeDropdown && session?.user?.role === 'ADMIN' && (
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-50 max-h-[200px] overflow-y-auto">
+                                            <div
+                                                className="px-3 py-2 cursor-pointer hover:bg-muted border-b text-sm text-muted-foreground"
+                                                onClick={async () => {
+                                                    setAssigneeLoading(true)
+                                                    await assignVulnerability(decodeId(params.id), null)
+                                                    setVuln((prev: any) => ({ ...prev, assignedTo: null }))
+                                                    setShowAssigneeDropdown(false)
+                                                    setAssigneeLoading(false)
+                                                    setToast({ message: "Assignee removed", type: 'success' })
+                                                }}
+                                            >
+                                                Unassign
+                                            </div>
+                                            {teamMembers.map((member) => (
+                                                <div
+                                                    key={member.id}
+                                                    className={cn(
+                                                        "px-3 py-2 cursor-pointer hover:bg-muted flex items-center gap-2",
+                                                        vuln.assignedTo?.id === member.id && "bg-muted"
+                                                    )}
+                                                    onClick={async () => {
+                                                        setAssigneeLoading(true)
+                                                        await assignVulnerability(decodeId(params.id), member.id)
+                                                        setVuln((prev: any) => ({ ...prev, assignedTo: member }))
+                                                        setShowAssigneeDropdown(false)
+                                                        setAssigneeLoading(false)
+                                                        setToast({ message: `Assigned to ${member.name || member.email}`, type: 'success' })
+                                                    }}
+                                                >
+                                                    <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center">
+                                                        <User className="h-3 w-3" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium">{member.name || member.email}</p>
+                                                        <p className="text-xs text-muted-foreground">{member.role}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
