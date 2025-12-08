@@ -29,16 +29,17 @@ export function DreadCalculator({ initialValues, onChange, readOnly = false }: D
         discoverability: initialValues?.discoverability || 0,
     })
 
-    const total = Object.values(scores).reduce((a, b) => a + b, 0) / 5
-
-    useEffect(() => {
-        if (onChange) {
-            onChange({ ...scores, total })
-        }
-    }, [scores, total, onChange])
+    // Calculate total on the fly
+    const currentTotal = Object.values(scores).reduce((a, b) => a + b, 0) / 5
 
     const handleScoreChange = (key: keyof typeof scores, value: number) => {
-        setScores((prev) => ({ ...prev, [key]: value }))
+        const newScores = { ...scores, [key]: value }
+        setScores(newScores)
+
+        if (onChange) {
+            const newTotal = Object.values(newScores).reduce((a, b) => a + b, 0) / 5
+            onChange({ ...newScores, total: newTotal })
+        }
     }
 
     return (
@@ -46,7 +47,7 @@ export function DreadCalculator({ initialValues, onChange, readOnly = false }: D
             <CardHeader>
                 <CardTitle className="flex justify-between">
                     <span>DREAD Score</span>
-                    <span className="text-2xl font-bold text-primary">{total.toFixed(1)}</span>
+                    <span className="text-2xl font-bold text-primary">{currentTotal.toFixed(1)}</span>
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
