@@ -5,61 +5,15 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { ShieldAlert, ArrowLeft, Search, Calendar, Clock, ArrowRight, BookOpen, Layers } from "lucide-react"
-import { motion } from "framer-motion"
-
-interface BlogPost {
-    id: string
-    slug: string
-    category: string
-    title: string
-    excerpt: string
-    author: string
-    authorRole: string
-    date: string
-    readTime: string
-    featured?: boolean
-    tags: string[]
-}
-
-const blogPosts: BlogPost[] = [
-    {
-        id: "1",
-        slug: "getting-started-with-dread-scoring",
-        category: "Tutorial",
-        title: "Getting Started with DREAD Scoring: A Complete Guide",
-        excerpt: "Learn to prioritize vulnerabilities using the DREAD framework - Damage, Reproducibility, Exploitability, Affected Users, and Discoverability.",
-        author: "Security Team",
-        authorRole: "Education",
-        date: "Dec 2, 2024",
-        readTime: "8 min read",
-        featured: true,
-        tags: ["DREAD", "Tutorial", "Risk Assessment"]
-    },
-    {
-        id: "2",
-        slug: "understanding-stride-threat-modeling",
-        category: "Guide",
-        title: "Understanding STRIDE Threat Modeling: Identify Threats Before They Strike",
-        excerpt: "Systematically identify security threats using STRIDE - Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, and Elevation of Privilege.",
-        author: "Security Team",
-        authorRole: "Education",
-        date: "Dec 5, 2024",
-        readTime: "10 min read",
-        featured: false,
-        tags: ["STRIDE", "Threat Modeling", "Security"]
-    }
-]
-
-const categories = [
-    { name: "All", count: blogPosts.length },
-    { name: "Tutorial", count: blogPosts.filter(p => p.category === "Tutorial").length },
-    { name: "Guide", count: blogPosts.filter(p => p.category === "Guide").length },
-]
+import { ShieldAlert, ArrowLeft, Search, Calendar, Clock, ArrowRight } from "lucide-react"
+import { blogPosts } from "@/lib/content"
 
 export default function BlogPage() {
     const [searchQuery, setSearchQuery] = useState("")
     const [selectedCategory, setSelectedCategory] = useState("All")
+
+    const categories = Array.from(new Set(blogPosts.map(p => p.category)))
+    const allCategories = ["All", ...categories]
 
     const filteredPosts = blogPosts.filter(post => {
         const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -69,8 +23,8 @@ export default function BlogPage() {
         return matchesSearch && matchesCategory
     })
 
-    const featuredPost = blogPosts.find(p => p.featured)
-    const regularPosts = filteredPosts.filter(p => !p.featured || selectedCategory !== "All")
+    const featuredPost = blogPosts[0] // First post is featured
+    const regularPosts = filteredPosts.filter(p => p.slug !== featuredPost.slug || selectedCategory !== "All")
 
     return (
         <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -105,10 +59,10 @@ export default function BlogPage() {
                                 Back to Home
                             </Link>
                             <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-                                Blog
+                                Security Knowledge Base
                             </h1>
                             <p className="text-lg text-muted-foreground mb-8">
-                                Security insights, guides, and updates from the VulnTrack team.
+                                Guides, tutorials, and insights to help you secure your applications effectively.
                             </p>
 
                             {/* Search */}
@@ -129,14 +83,14 @@ export default function BlogPage() {
                 <section className="py-6 border-b border-border/50">
                     <div className="container mx-auto px-4 md:px-6">
                         <div className="flex flex-wrap gap-2">
-                            {categories.map((cat) => (
+                            {allCategories.map((cat) => (
                                 <Button
-                                    key={cat.name}
-                                    variant={selectedCategory === cat.name ? "default" : "outline"}
+                                    key={cat}
+                                    variant={selectedCategory === cat ? "default" : "outline"}
                                     size="sm"
-                                    onClick={() => setSelectedCategory(cat.name)}
+                                    onClick={() => setSelectedCategory(cat)}
                                 >
-                                    {cat.name} ({cat.count})
+                                    {cat}
                                 </Button>
                             ))}
                         </div>
@@ -149,26 +103,27 @@ export default function BlogPage() {
                         <div className="container mx-auto px-4 md:px-6">
                             <h2 className="text-sm font-semibold text-muted-foreground mb-6 uppercase tracking-wider">Featured Article</h2>
                             <Link href={`/blog/${featuredPost.slug}`}>
-                                <div className="grid md:grid-cols-1 gap-8 items-start p-6 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer bg-card">
-                                    <div>
+                                <div className="grid md:grid-cols-2 gap-8 items-start p-6 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer bg-card group">
+                                    <div className="h-full flex flex-col justify-center">
                                         <div className="flex items-center gap-2 mb-3">
                                             <Badge variant="secondary">{featuredPost.category}</Badge>
                                             <span className="text-sm text-muted-foreground flex items-center gap-1">
                                                 <Calendar className="h-3 w-3" /> {featuredPost.date}
                                             </span>
-                                            <span className="text-sm text-muted-foreground flex items-center gap-1">
-                                                <Clock className="h-3 w-3" /> {featuredPost.readTime}
-                                            </span>
                                         </div>
-                                        <h2 className="text-2xl font-bold mb-3">
+                                        <h2 className="text-2xl md:text-3xl font-bold mb-3 group-hover:text-primary transition-colors">
                                             {featuredPost.title}
                                         </h2>
-                                        <p className="text-muted-foreground mb-4 max-w-2xl">
+                                        <p className="text-muted-foreground mb-4 text-lg">
                                             {featuredPost.excerpt}
                                         </p>
-                                        <div className="flex items-center text-primary font-medium text-sm">
+                                        <div className="flex items-center text-primary font-medium text-sm mt-auto">
                                             Read Article <ArrowRight className="ml-2 h-4 w-4" />
                                         </div>
+                                    </div>
+                                    {/* Placeholder for future image */}
+                                    <div className="hidden md:flex h-full min-h-[250px] bg-muted rounded-lg items-center justify-center text-muted-foreground bg-gradient-to-br from-muted/50 to-muted">
+                                        <ShieldAlert className="h-16 w-16 opacity-20" />
                                     </div>
                                 </div>
                             </Link>
@@ -195,14 +150,16 @@ export default function BlogPage() {
                         ) : (
                             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {regularPosts.map((post) => (
-                                    <Link key={post.id} href={`/blog/${post.slug}`}>
-                                        <article className="h-full flex flex-col p-6 rounded-lg border border-border hover:border-primary/50 transition-colors bg-card">
+                                    <Link key={post.slug} href={`/blog/${post.slug}`}>
+                                        <article className="h-full flex flex-col p-6 rounded-lg border border-border hover:border-primary/50 transition-colors bg-card group">
                                             <div className="flex items-center gap-2 mb-3">
                                                 <Badge variant="outline">{post.category}</Badge>
-                                                <span className="text-xs text-muted-foreground">{post.readTime}</span>
+                                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                                    <Clock className="h-3 w-3" /> {post.readTime}
+                                                </span>
                                             </div>
 
-                                            <h3 className="text-lg font-bold mb-2 line-clamp-2">
+                                            <h3 className="text-lg font-bold mb-2 line-clamp-2 group-hover:text-primary transition-colors">
                                                 {post.title}
                                             </h3>
 

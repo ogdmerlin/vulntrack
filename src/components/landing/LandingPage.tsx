@@ -355,15 +355,7 @@ export function LandingPage() {
                     <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background" />
                     <div className="container mx-auto px-4 md:px-6 relative z-10">
                         <div className="flex flex-col items-center text-center space-y-8">
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                                className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
-                            >
-                                <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse"></span>
-                                v2.0 is now live
-                            </motion.div>
+
 
                             <motion.h1
                                 initial={{ opacity: 0, y: 20 }}
@@ -392,7 +384,7 @@ export function LandingPage() {
                             >
                                 <Link href="/register">
                                     <Button size="lg" className="h-12 px-8 text-base w-full sm:w-auto shadow-xl shadow-primary/20">
-                                        Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
+                                        Get Started <ArrowRight className="ml-2 h-4 w-4" />
                                     </Button>
                                 </Link>
                                 <Link href="/login">
@@ -529,7 +521,7 @@ export function LandingPage() {
                             <div className="flex justify-center gap-4">
                                 <Link href="/register">
                                     <Button size="lg" className="h-12 px-8 text-base shadow-xl shadow-primary/20">
-                                        Get Started for Free
+                                        Get Started
                                     </Button>
                                 </Link>
                             </div>

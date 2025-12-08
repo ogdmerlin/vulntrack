@@ -1,37 +1,54 @@
 # VulnTrack
 
-VulnTrack is a modern, open-source vulnerability management dashboard designed to help teams track, score, and remediate security threats. It supports DREAD and STRIDE scoring models and provides a clean, intuitive interface for security professionals.
+**Open Source Vulnerability Management Platform**
 
-## Features
+VulnTrack is a modern, privacy-focused vulnerability management dashboard designed for security teams who value precision and improved workflows. It goes beyond simple CVE tracking by integrating **DREAD**, **STRIDE**, and **CVSS** frameworks into a unified remediation workflow.
 
-- **Vulnerability Tracking**: Centralized dashboard for managing CVEs and internal findings.
-- **Scoring Frameworks**: Built-in support for DREAD and STRIDE threat modeling.
-- **Admin Control Panel**: Manage users, roles, and system settings.
-- **Secure Onboarding**: Invitation-based user registration system.
-- **Reporting**: Generate comprehensive security reports.
-- **Modern UI**: specialized dark-mode interface built with Tailwind CSS and shadcn/ui.
+## 🚀 Features
 
-## Self-Hosting Guide
+### Core Capabilities
+- **Unified Risk Scoring**: Calculate and compare risks using multiple frameworks:
+  - **DREAD**: Quantitative scoring for internal triage (Damage, Reproducibility, Exploitability, Affected Users, Discoverability).
+  - **STRIDE**: Threat modeling identification (Spoofing, Tampering, Repudiation, etc.).
+  - **CVSS v3.1**: Industry standard scoring for external compliance and reporting.
+- **CVE Import Engine**: Auto-fetch and parses vulnerability data (NIST NVD/VulnCheck integration).
+- **Team Collaboration**: Team-based workspaces with granular role-based access control (RBAC).
 
-You can easily self-host VulnTrack on your own infrastructure. Follow these steps to get up and running.
+### Research & Knowledge
+- **VulnTrack Research**: A built-in, professional-grade blog system hosting deep technical guides.
+  - **OWASP Top 10 2024** Analysis.
+  - **DREAD vs CVSS** Strategy Guides.
+  - **Formatting**: Engineering-grade markdown support with strict professional typography.
 
-### Prerequisites
+### Operations
+- **Reporting Engine**: Generate executive-ready PDF and CSV reports with one click.
+- **Secure Onboarding**: Invitation-only registration system to maintain comprehensive access control.
+- **Modern UI**: A "dark-mode first" aesthetic designed for long operational sessions, built with **Radix UI** and **Tailwind CSS**.
 
-- **Node.js**: v18.17.0 or higher
-- **Database**: PostgreSQL (recommended) or SQLite (for local testing)
-- **PackageManager**: npm, yarn, or pnpm
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: [Next.js 14](https://nextjs.org/) (App Router, Server Actions)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Database**: [PostgreSQL](https://www.postgresql.org/) (via [Prisma ORM](https://www.prisma.io/))
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/)
+- **Auth**: [NextAuth.js](https://next-auth.js.org/)
+- **Content**: MDX / React Markdown with GFM
+
+---
+
+## 📦 Getting Started
 
 ### 1. Installation
 
-Clone the repository and install dependencies:
-
 ```bash
-git clone https://github.com/yourusername/vulntrack.git
+git clone https://github.com/ogdmerlin/vulntrack.git
 cd vulntrack
 npm install
 ```
 
-### 2. Environment Configuration
+### 2. Environment Setup
 
 Create a `.env` file in the root directory:
 
@@ -39,70 +56,45 @@ Create a `.env` file in the root directory:
 cp .env.example .env
 ```
 
-Define the following variables:
+Ensure the following variables are set:
 
 ```env
-# Database Connection
-DATABASE_URL="file:./dev.db" # Or your PostgreSQL connection string
-
-# NextAuth Configuration
-NEXTAUTH_URL="http://localhost:3000" # Update for production (e.g., https://vulntrack.yourdomain.com)
-NEXTAUTH_SECRET="your-super-secret-key-change-this"
-
-# (Optional) SMTP Settings for Emails (Coming Soon)
-# SMTP_HOST=smtp.example.com
-# SMTP_PORT=587
-# SMTP_USER=user
-# SMTP_PASSWORD=password
+DATABASE_URL="postgresql://user:password@localhost:5432/vulntrack"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="openssl rand -base64 32"
 ```
 
-### 3. Database Setup
-
-Initialize the database schema:
+### 3. Database Initialization
 
 ```bash
+npx prisma generate
 npx prisma db push
 ```
 
-### 4. Running the Application
-
-Start the production server:
-
+*(Optional) Seed the database with initial data:*
 ```bash
-npm run build
-npm start
+npx prisma db seed
 ```
 
-The application will be available at `http://localhost:3000`.
+### 4. Running Locally
 
-## User Management & Security
+```bash
+npm run dev
+```
+Visit `http://localhost:3000` to start.
 
-VulnTrack uses a secure, invitation-based onboarding system to prevent unauthorized access.
+---
 
-### First Run: Creating the Admin
-When you first deploy the application, the database will be empty.
-1. Navigate to `/register`.
-2. The **First User** to register will automatically be granted **Administrator** privileges.
-3. No invitation code is required for this initial account.
+## 🔐 User Management
 
-### Onboarding Your Team
-For security reasons, public registration is **disabled**. New users can only join via invitation:
-1. Log in as an **Administrator**.
-2. Go to `Dashboard > Admin > User Management`.
-3. Click **"Invite User"**.
-4. Select the role (Viewer, Analyst, or Admin) and enter their email.
-5. Share the generated **Invitation Link** with your team member.
-6. They can use this link to create their own account and set their own secure password.
+VulnTrack uses a strict **Invitation System** for security.
 
-## Tech Stack
+1. **Initial Setup**: The first registered user (or the user created via `seed.js`) is the **System Administrator**.
+2. **Inviting Teams**: Admins can generate single-use invitation links from the `Dashboard > Settings` panel.
+3. **Role Assignment**: Assign users as **Admin**, **Analyst**, or **Viewer** to control their access to sensitive vulnerability data.
 
-- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **UI Components**: [shadcn/ui](https://ui.shadcn.com/)
-- **Database**: [Prisma ORM](https://www.prisma.io/)
-- **Icons**: [Lucide React](https://lucide.dev/)
+---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License**.
