@@ -61,6 +61,7 @@ export async function createUser(data: any) {
                 role: data.role,
                 status: data.status,
                 isOnboarded: true, // Auto-onboard admin created users
+                createdById: session.user.id
             }
         })
         await logAudit("CREATE_USER", "User", user.id, `User created by ${session.user.email}`)

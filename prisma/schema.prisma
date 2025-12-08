@@ -38,6 +38,11 @@ model User {
   comments      Comment[]
   invitations   Invitation[]  @relation("UserInvitations")
   notifications Notification[]
+  
+  // Multi-tenant safety
+  createdById   String?
+  createdBy     User?         @relation("CreatedUsers", fields: [createdById], references: [id])
+  createdUsers  User[]        @relation("CreatedUsers")
 }
 
 model Vulnerability {

@@ -107,7 +107,10 @@ export async function registerUser(data: any) {
 
         // Create user
         const user = await prisma.user.create({
-            data: userData
+            data: {
+                ...userData,
+                createdById: invitationId ? (await prisma.invitation.findUnique({ where: { id: invitationId } }))?.inviterId : undefined
+            }
         })
 
         // Delete invitation if it was used
