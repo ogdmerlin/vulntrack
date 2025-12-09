@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
 const { randomBytes } = require('crypto')
 
 async function main() {
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@vulntrack.app'
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@test.org'
     // Generate secure random password if not provided in env
     const rawPassword = process.env.ADMIN_PASSWORD || randomBytes(16).toString('hex')
 
