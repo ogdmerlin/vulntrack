@@ -25,26 +25,54 @@ export async function getUsers() {
             select: { teamId: true }
         })
 
-        const users = await prisma.user.findMany({
-            where: {
-                teamId: admin?.teamId // Only show users in the same team
-            },
-            orderBy: { createdAt: 'desc' },
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-                status: true,
-                image: true,
-                createdAt: true,
-                _count: {
-                    select: { vulnerabilities: true }
+        const [users, invitations] = await Promise.all([
+            prisma.user.findMany({
+                where: {
+                    teamId: admin?.teamId
+                },
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true,
+                    status: true,
+                    image: true,
+                    createdAt: true,
+                    _count: {
+                        select: { vulnerabilities: true }
+                    }
                 }
-            }
-        })
-        return { success: true, data: users }
+            }),
+            prisma.invitation.findMany({
+                where: {
+                    teamId: admin?.teamId
+                },
+                orderBy: { createdAt: 'desc' }
+            })
+        ])
+
+        // Map invitations to match user structure for the UI
+        const pendingUsers = invitations.map(inv => ({
+            id: inv.id,
+            name: "Pending User",
+            email: inv.email,
+            role: inv.role,
+            status: "PENDING",
+            image: null,
+            createdAt: inv.createdAt,
+            _count: { vulnerabilities: 0 },
+            isInvitation: true
+        }))
+
+        // Combine and Sort
+        const allUsers = [...pendingUsers, ...users].sort((a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+
+        return { success: true, data: allUsers }
     } catch (error) {
+        console.error("getUsers error:", error)
         return { success: false, error: "Failed to fetch users" }
     }
 }
@@ -151,8 +179,14 @@ export async function deleteUser(userId: string) {
     const session = await checkAdmin()
     try {
         // Authorization: Verify Admin and Target User are in the same team
-        const admin = await prisma.user.findUnique({ where: { id: session.user.id }, select: { teamId: true } })
-        const targetUser = await prisma.user.findUnique({ where: { id: userId }, select: { teamId: true } })
+        const admin = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { teamId: true }
+        })
+        const targetUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { teamId: true }
+        })
 
         if (!admin?.teamId || !targetUser || admin.teamId !== targetUser.teamId) {
             return { success: false, error: "Unauthorized access to user" }
@@ -229,9 +263,11 @@ export async function createInvitation(email: string, role: string) {
         })
 
         if (!emailResult.success) {
-            console.error("Failed to send invitation email:", emailResult.error)
-            // We verify success but don't fail the action if email fails, just warn
-            // Ideally we might want to tell the user, but for now we return success with data
+            console.error("❌ Failed to send invitation email:", emailResult.error)
+            console.error("DEBUG: API Key present?", !!process.env.RESEND_API_KEY)
+            console.error("DEBUG: From Email:", process.env.EMAIL_FROM)
+        } else {
+            console.log("✅ Invitation email sent successfully to:", email)
         }
 
         await logAudit("CREATE_INVITATION", "Invitation", invitation.id, `Invited ${email} as ${role}`)

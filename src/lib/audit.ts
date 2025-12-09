@@ -12,6 +12,11 @@ export async function logAudit(action: string, entityType: string, entityId: str
             return
         }
 
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { teamId: true }
+        })
+
         await prisma.auditLog.create({
             data: {
                 action,
@@ -19,6 +24,7 @@ export async function logAudit(action: string, entityType: string, entityId: str
                 entityId,
                 details,
                 userId,
+                teamId: user?.teamId
             }
         })
     } catch (error) {

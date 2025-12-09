@@ -107,16 +107,21 @@ model AuditLog {
   details     String?
   userId      String
   user        User     @relation(fields: [userId], references: [id])
+  
+  // Data Isolation
+  teamId      String?
+  team        Team?    @relation(fields: [teamId], references: [id])
+
   createdAt   DateTime @default(now())
 }
 
 model DreadScore {
   id              String        @id @default(uuid())
-  damage          Float
-  reproducibility Float
-  exploitability  Float
-  affectedUsers   Float
-  discoverability Float
+  damage          Int
+  reproducibility Int
+  exploitability  Int
+  affectedUsers   Int
+  discoverability Int
   total           Float
   
   vulnerabilityId String        @unique
@@ -125,12 +130,12 @@ model DreadScore {
 
 model StrideScore {
   id                    String        @id @default(uuid())
-  spoofing              Boolean
-  tampering             Boolean
+  spoofing              Boolean       @default(false)
+  tampering             Boolean       @default(false)
   reputation            Boolean
-  informationDisclosure Boolean
-  denialOfService       Boolean
-  elevationOfPrivilege  Boolean
+  informationDisclosure Boolean       @default(false)
+  denialOfService       Boolean       @default(false)
+  elevationOfPrivilege  Boolean       @default(false)
   
   vulnerabilityId       String        @unique
   vulnerability         Vulnerability @relation(fields: [vulnerabilityId], references: [id], onDelete: Cascade)
@@ -142,11 +147,12 @@ model Invitation {
   token     String   @unique
   role      String   @default("VIEWER")
   expiresAt DateTime
-  inviterId String
-  inviter   User     @relation("UserInvitations", fields: [inviterId], references: [id])
   
   teamId    String?
   team      Team?    @relation(fields: [teamId], references: [id])
+  
+  inviterId String
+  inviter   User     @relation("UserInvitations", fields: [inviterId], references: [id])
   
   createdAt DateTime @default(now())
 }
