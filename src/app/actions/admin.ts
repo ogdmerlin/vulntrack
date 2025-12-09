@@ -234,7 +234,11 @@ export async function createInvitation(email: string, role: string) {
 
         await logAudit("CREATE_INVITATION", "Invitation", invitation.id, `Invited ${email} as ${role}`)
         revalidatePath('/dashboard/admin/users')
-        return { success: true, message: "Invitation sent successfully" }
+        return {
+            success: true,
+            message: "Invitation sent successfully",
+            data: { token, link: inviteLink } // Return data for UI to display if needed
+        }
     } catch (error) {
         console.error("Create invitation error:", error)
         return { success: false, error: "Failed to create invitation" }
