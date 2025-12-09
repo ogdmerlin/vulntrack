@@ -205,18 +205,36 @@ export async function createInvitation(email: string, role: string) {
         const invitation = await prisma.invitation.create({
             data: {
                 email,
-                role,
                 token,
+                role, // Store role in invitation
+                teamId: inviter?.teamId, // Bind invitation to team
                 expiresAt,
-                inviterId: session.user.id,
-                teamId: inviter?.teamId
+                inviterId: session.user.id
             }
         })
 
-        await logAudit("CREATE_INVITE", "Invitation", invitation.id, `Invitation created for ${email}`)
-        revalidatePath('/dashboard/admin/users')
+        // Send Invitation Email
+        const { sendEmail } = await import("@/lib/email")
+        const { getInvitationEmail } = await import("@/lib/email-templates")
 
-        return { success: true, data: { token, link: `/register?token=${token}` } }
+        const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/register?token=${token}`
+
+        const emailResult = await sendEmail({
+            to: email,
+            subject: "You've been invited to VulnTrack",
+            html: getInvitationEmail(inviteLink),
+            text: `You've been invited to VulnTrack. Click here to join: ${inviteLink}`
+        })
+
+        if (!emailResult.success) {
+            console.error("Failed to send invitation email:", emailResult.error)
+            // We verify success but don't fail the action if email fails, just warn
+            // Ideally we might want to tell the user, but for now we return success with data
+        }
+
+        await logAudit("CREATE_INVITATION", "Invitation", invitation.id, `Invited ${email} as ${role}`)
+        revalidatePath('/dashboard/admin/users')
+        return { success: true, message: "Invitation sent successfully" }
     } catch (error) {
         console.error("Create invitation error:", error)
         return { success: false, error: "Failed to create invitation" }

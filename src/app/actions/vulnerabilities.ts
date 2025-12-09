@@ -449,12 +449,40 @@ export async function assignVulnerability(vulnerabilityId: string, assigneeId: s
             await prisma.notification.create({
                 data: {
                     userId: assigneeId,
-                    type: "VULNERABILITY_ASSIGNED",
-                    title: "New Assignment",
-                    message: `You have been assigned to vulnerability: ${vulnerability.title}`,
+                    type: "ASSIGNMENT",
+                    title: "New Vulnerability Assigned",
+                    message: `You have been assigned to: ${vulnerability.title}`,
                     link: `/dashboard/vulnerabilities/${vulnerabilityId}`
                 }
             })
+
+            // Send Email Notification
+            const { sendEmail } = await import("@/lib/email")
+            const { getAssignmentEmail } = await import("@/lib/email-templates")
+
+            // We need to fetch email if it wasn't selected (though we should update the query above)
+            // But let's check if we selected it. The previous query selected 'name' but not 'email'.
+            // To be safe and minimal change, let's just fetch it if we have the assignee object, 
+            // or update the query in the same file if possible. 
+            // The tool allows replacing a chunk. I will update the query in a separate edit or assume I can't see it?
+            // I can't update line 441 in this chunk (it's outside range). 
+            // I will fetch the email here to be safe and avoid multi-chunk complexity unless necessary.
+            // Actually, I should update the query or fetch it. Fetching is safer for now.
+
+            const assigneeUser = await prisma.user.findUnique({
+                where: { id: assigneeId },
+                select: { email: true }
+            })
+
+            if (assigneeUser?.email) {
+                await sendEmail({
+                    to: assigneeUser.email,
+                    subject: `New Assignment: ${vulnerability.title}`,
+                    html: getAssignmentEmail(vulnerability.title, vulnerabilityId),
+                    text: `You have been assigned to vulnerability: ${vulnerability.title}. View it at: ${process.env.NEXT_PUBLIC_APP_URL}/dashboard/vulnerabilities/${vulnerabilityId}`
+                })
+            }
+
         }
 
         await prisma.vulnerability.update({
