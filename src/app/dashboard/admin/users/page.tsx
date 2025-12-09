@@ -123,13 +123,21 @@ export default function AdminUsersPage() {
         loadUsers()
     }
 
-    async function handleDelete(userId: string) {
-        if (confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
-            const result = await deleteUser(userId)
+    async function handleDelete(user: any) {
+        if (confirm(`Are you sure you want to delete this ${user.isInvitation ? 'invitation' : 'user'}? This action cannot be undone.`)) {
+            let result
+
+            if (user.isInvitation) {
+                const { deleteInvitation } = await import("@/app/actions/admin")
+                result = await deleteInvitation(user.id)
+            } else {
+                result = await deleteUser(user.id)
+            }
+
             if (result.success) {
                 loadUsers()
             } else {
-                alert("Failed to delete user")
+                alert(`Failed to delete ${user.isInvitation ? 'invitation' : 'user'}`)
             }
         }
     }
@@ -367,7 +375,7 @@ export default function AdminUsersPage() {
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-8 w-8"
-                                                        onClick={() => handleDelete(user.id)}
+                                                        onClick={() => handleDelete(user)}
                                                         disabled={user.id === session?.user?.id}
                                                     >
                                                         <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />

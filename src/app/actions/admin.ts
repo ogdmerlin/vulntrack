@@ -203,6 +203,36 @@ export async function deleteUser(userId: string) {
     }
 }
 
+export async function deleteInvitation(invitationId: string) {
+    const session = await checkAdmin()
+    try {
+        // Authorization: Verify Admin and Invitation are in the same team
+        const admin = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { teamId: true }
+        })
+
+        const invitation = await prisma.invitation.findUnique({
+            where: { id: invitationId }
+        })
+
+        if (!admin?.teamId || !invitation || admin.teamId !== invitation.teamId) {
+            return { success: false, error: "Unauthorized access to invitation" }
+        }
+
+        await prisma.invitation.delete({
+            where: { id: invitationId }
+        })
+
+        await logAudit("DELETE_INVITATION", "Invitation", invitationId, `Invitation revoked for ${invitation.email}`)
+        revalidatePath('/dashboard/admin/users')
+        return { success: true }
+    } catch (error) {
+        console.error("Delete invitation error:", error)
+        return { success: false, error: "Failed to revoke invitation" }
+    }
+}
+
 export async function createInvitation(email: string, role: string) {
     const session = await checkAdmin()
     try {
