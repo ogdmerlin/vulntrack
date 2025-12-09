@@ -213,17 +213,19 @@ export async function createInvitation(email: string, role: string) {
             }
         })
 
+        // Generate Invite URL
+        const invitePath = `/register?token=${token}`
+        const absoluteInviteLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://vulntrack.org'}${invitePath}`
+
         // Send Invitation Email
         const { sendEmail } = await import("@/lib/email")
         const { getInvitationEmail } = await import("@/lib/email-templates")
 
-        const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/register?token=${token}`
-
         const emailResult = await sendEmail({
             to: email,
             subject: "You've been invited to VulnTrack",
-            html: getInvitationEmail(inviteLink),
-            text: `You've been invited to VulnTrack. Click here to join: ${inviteLink}`
+            html: getInvitationEmail(absoluteInviteLink),
+            text: `You've been invited to VulnTrack. Click here to join: ${absoluteInviteLink}`
         })
 
         if (!emailResult.success) {
@@ -237,7 +239,7 @@ export async function createInvitation(email: string, role: string) {
         return {
             success: true,
             message: "Invitation sent successfully",
-            data: { token, link: inviteLink } // Return data for UI to display if needed
+            data: { token, link: invitePath } // Return relative path so UI can append origin correctly
         }
     } catch (error) {
         console.error("Create invitation error:", error)
