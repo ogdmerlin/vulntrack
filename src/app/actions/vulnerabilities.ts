@@ -98,13 +98,10 @@ export async function getVulnerability(id: string) {
             return { success: false, error: "Vulnerability not found" }
         }
 
-        // Check Team Scope
-        if (vulnerability.teamId !== user?.teamId && user?.role !== 'ADMIN') { // simple check, robust check needs to handle nulls
-            // Actually, if teamIds mismatch, deny.
-            // Allow if ADMIN and both have null teamId?
-            if (vulnerability.teamId !== user?.teamId) {
-                return { success: false, error: "Unauthorized" }
-            }
+        // Check Team Scope - STRICT ISOLATION
+        // Admins are scoped to their team. They cannot see other teams' data.
+        if (!user?.teamId || !vulnerability.teamId || user.teamId !== vulnerability.teamId) {
+            return { success: false, error: "Unauthorized: Cross-tenant access denied" }
         }
 
         // Check Status Visibility
