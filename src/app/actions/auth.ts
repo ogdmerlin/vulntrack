@@ -31,33 +31,27 @@ export async function registerUser(data: any) {
         let invitationId = null
 
         if (userCount === 0) {
-            // First user becomes ADMIN
+            // First user becomes ADMIN and gets the first team
             role = "ADMIN"
+            // We will create the team in the Team Assignment block
         } else {
-            // Subsequent users require a valid token
+            // Check for token
             const token = data.token
-            if (!token) {
-                return { success: false, error: "Registration is invite-only. Please provide a valid invitation token." }
+
+            if (token) {
+                // Invitation Flow
+                const invitation = await prisma.invitation.findUnique({ where: { token } })
+
+                if (!invitation) return { success: false, error: "Invalid invitation token." }
+                if (invitation.expiresAt < new Date()) return { success: false, error: "Invitation expired." }
+                if (invitation.email.toLowerCase() !== email.toLowerCase()) return { success: false, error: "Email does not match invitation." }
+
+                role = invitation.role
+                invitationId = invitation.id
+            } else {
+                // Self-Serve Flow: User creates a new account as ADMIN
+                role = "ADMIN"
             }
-
-            const invitation = await prisma.invitation.findUnique({
-                where: { token }
-            })
-
-            if (!invitation) {
-                return { success: false, error: "Invalid invitation token." }
-            }
-
-            if (invitation.expiresAt < new Date()) {
-                return { success: false, error: "Invitation expired." }
-            }
-
-            if (invitation.email.toLowerCase() !== email.toLowerCase()) {
-                return { success: false, error: "Email does not match invitation." }
-            }
-
-            role = invitation.role
-            invitationId = invitation.id
         }
 
         // Check if user exists (Double check)
@@ -78,20 +72,23 @@ export async function registerUser(data: any) {
             name,
             password: hashedPassword,
             role: role,
-            isOnboarded: role === 'ADMIN' ? true : false,
+            isOnboarded: true, // Auto-onboard for simplicity
         }
 
         // Handle Team Assignment
-        if (userCount === 0) {
-            // First user creates the default team
+        if (userCount === 0 || !invitationId) {
+            // First user OR Self-Serve user creates a new team
+            // Default Team Name
+            const teamName = userCount === 0 ? "Didactic Organization" : `${name}'s Organization`
+
             const team = await prisma.team.create({
                 data: {
-                    name: "Didactic Organization" // Default name
+                    name: teamName
                 }
             })
             userData.teamId = team.id
         } else if (invitationId) {
-            // Find invitation details to get team
+            // Invitation: Join existing team
             const invitation = await prisma.invitation.findUnique({
                 where: { id: invitationId }
             })
