@@ -43,6 +43,12 @@ model User {
   createdById   String?
   createdBy     User?         @relation("CreatedUsers", fields: [createdById], references: [id])
   createdUsers  User[]        @relation("CreatedUsers")
+
+  // Profile fields
+  phone         String?
+  jobTitle      String?
+  department    String?
+  bio           String?
 }
 
 model Vulnerability {

@@ -10,6 +10,7 @@ export async function updateProfile(data: {
     name?: string
     phone?: string
     jobTitle?: string
+    department?: string
     bio?: string
 }) {
     const session = await getServerSession(authOptions)
@@ -22,8 +23,10 @@ export async function updateProfile(data: {
             where: { email: session.user.email },
             data: {
                 name: data.name,
-                // Note: phone, jobTitle, bio would need to be added to schema
-                // For now we just update the name
+                phone: data.phone,
+                jobTitle: data.jobTitle,
+                department: data.department,
+                bio: data.bio
             }
         })
 
@@ -33,5 +36,33 @@ export async function updateProfile(data: {
     } catch (error) {
         console.error("updateProfile error:", error)
         return { success: false, error: "Failed to update profile" }
+    }
+}
+
+export async function getProfile() {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.email) {
+        return { success: false, error: "Unauthorized" }
+    }
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email: session.user.email },
+            select: {
+                name: true,
+                email: true,
+                image: true,
+                phone: true,
+                jobTitle: true,
+                department: true,
+                bio: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true
+            }
+        })
+        return { success: true, data: user }
+    } catch (error) {
+        return { success: false, error: "Failed to fetch profile" }
     }
 }
