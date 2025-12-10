@@ -9,9 +9,6 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "VulnTrack",
   description: "Advanced Vulnerability Management & Tracking System",
-  icons: {
-    icon: "/favicon.svg",
-  },
 };
 
 export default function RootLayout({
