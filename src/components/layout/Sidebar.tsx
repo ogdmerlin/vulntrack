@@ -39,13 +39,13 @@ const sidebarItems = [
     {
         title: "Reports",
         href: "/dashboard/reports",
-        icon: BarChart, // We need to import BarChart
+        icon: BarChart,
     },
 ]
 
-export function Sidebar() {
+export function SidebarContent() {
     return (
-        <div className="flex h-screen w-64 flex-col border-r bg-card">
+        <div className="flex h-full flex-col bg-card">
             <div className="flex h-14 items-center border-b px-6">
                 <Link href="/" className="flex items-center gap-2 font-semibold">
                     <ShieldAlert className="h-6 w-6 text-primary" />
@@ -78,6 +78,14 @@ export function Sidebar() {
                     Sign Out
                 </button>
             </div>
+        </div>
+    )
+}
+
+export function Sidebar() {
+    return (
+        <div className="hidden border-r md:flex h-screen w-64 flex-col">
+            <SidebarContent />
         </div>
     )
 }
