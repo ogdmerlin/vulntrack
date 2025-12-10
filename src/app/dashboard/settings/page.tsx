@@ -245,8 +245,8 @@ export default function SettingsPage() {
             <Card>
                 <CardContent className="p-0">
                     {/* Tabs */}
-                    <div className="border-b px-6">
-                        <nav className="-mb-px flex space-x-6">
+                    <div className="border-b px-4 md:px-6 overflow-x-auto">
+                        <nav className="-mb-px flex space-x-6 min-w-max">
                             {tabs.map((tab) => (
                                 <button
                                     key={tab.id}
@@ -265,7 +265,7 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Tab Content */}
-                    <div className="p-6">
+                    <div className="p-4 md:p-6">
                         {activeTab === "personal" && (
                             <div className="space-y-6">
                                 {/* Personal Information Form */}
@@ -352,8 +352,8 @@ export default function SettingsPage() {
                                     />
                                 </div>
 
-                                <div className="flex justify-end pt-4">
-                                    <Button onClick={handleSave} disabled={loading} className="bg-slate-900 text-white hover:bg-slate-800 min-w-[150px]">
+                                <div className="flex flex-col-reverse sm:flex-row justify-end pt-4 gap-4 sm:gap-0">
+                                    <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto bg-slate-900 text-white hover:bg-slate-800 min-w-[150px]">
                                         {loading ? (
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         ) : (

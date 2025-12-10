@@ -33,13 +33,13 @@ export default function ProfilePage() {
             <div className="grid gap-6 md:grid-cols-2">
                 {/* Profile Information Card */}
                 <Card>
-                    <CardHeader>
+                    <CardHeader className="p-4 md:p-6">
                         <CardTitle>Profile Information</CardTitle>
                         <CardDescription>
                             Your personal account details
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-6">
+                    <CardContent className="space-y-6 p-4 md:p-6 pt-0 md:pt-0">
                         {/* Avatar Section */}
                         <div className="flex items-center gap-4">
                             <Avatar className="h-20 w-20">
@@ -95,13 +95,13 @@ export default function ProfilePage() {
 
                 {/* Account Details Card */}
                 <Card>
-                    <CardHeader>
+                    <CardHeader className="p-4 md:p-6">
                         <CardTitle>Account Details</CardTitle>
                         <CardDescription>
                             Information about your account
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 p-4 md:p-6 pt-0 md:pt-0">
                         <div className="flex items-center justify-between py-3 border-b">
                             <div className="flex items-center gap-3">
                                 <Shield className="h-5 w-5 text-muted-foreground" />
@@ -113,8 +113,8 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                             <div className={`px-2 py-1 rounded text-xs font-medium ${session?.user?.role === 'admin'
-                                    ? 'bg-primary/10 text-primary'
-                                    : 'bg-muted text-muted-foreground'
+                                ? 'bg-primary/10 text-primary'
+                                : 'bg-muted text-muted-foreground'
                                 }`}>
                                 {session?.user?.role === 'admin' ? 'Admin' : 'User'}
                             </div>
@@ -151,13 +151,13 @@ export default function ProfilePage() {
 
                 {/* Security Card */}
                 <Card>
-                    <CardHeader>
+                    <CardHeader className="p-4 md:p-6">
                         <CardTitle>Security</CardTitle>
                         <CardDescription>
                             Manage your password and security settings
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 p-4 md:p-6 pt-0 md:pt-0">
                         <div className="space-y-2">
                             <Label htmlFor="current-password">Current Password</Label>
                             <Input
@@ -190,13 +190,13 @@ export default function ProfilePage() {
 
                 {/* Danger Zone Card */}
                 <Card className="border-destructive/50">
-                    <CardHeader>
+                    <CardHeader className="p-4 md:p-6">
                         <CardTitle className="text-destructive">Danger Zone</CardTitle>
                         <CardDescription>
                             Irreversible actions for your account
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 p-4 md:p-6 pt-0 md:pt-0">
                         <div className="rounded-lg border border-destructive/50 p-4 space-y-3">
                             <div>
                                 <h4 className="font-medium">Delete Account</h4>
