@@ -359,166 +359,168 @@ export default function VulnerabilitiesPage() {
                     </div>
                 </div>
 
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-muted/50">
-                            <TableHead className="w-[50px]">
-                                <Checkbox />
-                            </TableHead>
-                            <TableHead className="w-[300px]">VULNERABILITY</TableHead>
-                            <TableHead>SEVERITY</TableHead>
-                            <TableHead>ASSET</TableHead>
-                            <TableHead>STATUS</TableHead>
-                            <TableHead>FOUND</TableHead>
-                            <TableHead className="text-right">ACTIONS</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {paginatedVulnerabilities.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center">
-                                    No vulnerabilities found.{" "}
-                                    <Link href="/dashboard/vulnerabilities/new" className="text-primary hover:underline">
-                                        Add your first vulnerability
-                                    </Link>
-                                </TableCell>
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-muted/50">
+                                <TableHead className="w-[50px]">
+                                    <Checkbox />
+                                </TableHead>
+                                <TableHead className="w-[300px]">VULNERABILITY</TableHead>
+                                <TableHead>SEVERITY</TableHead>
+                                <TableHead>ASSET</TableHead>
+                                <TableHead>STATUS</TableHead>
+                                <TableHead>FOUND</TableHead>
+                                <TableHead className="text-right">ACTIONS</TableHead>
                             </TableRow>
-                        ) : (
-                            paginatedVulnerabilities.map((vuln) => (
-                                <TableRow key={vuln.id} className="group hover:bg-muted/50">
-                                    <TableCell>
-                                        <Checkbox />
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-start gap-2">
-                                            {getSeverityIcon(vuln.severity)}
-                                            <div>
-                                                <button
-                                                    onClick={() => handleView(vuln)}
-                                                    className="font-medium hover:underline text-left"
-                                                >
-                                                    {vuln.title}
-                                                </button>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {vuln.cveId || `VT-${vuln.id.slice(-8).toUpperCase()}`}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge className={`${getSeverityBadge(vuln.severity)} rounded-full px-3`}>
-                                            {vuln.severity}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div>
-                                            <p className="text-sm font-medium">
-                                                {vuln.asset || "System Asset"}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                Web Application
-                                            </p>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge
-                                            variant="outline"
-                                            className={`${getStatusBadge(vuln.status)} rounded-full`}
-                                        >
-                                            {vuln.status === "IN_PROGRESS" ? "In Progress" :
-                                                vuln.status.charAt(0) + vuln.status.slice(1).toLowerCase()}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div>
-                                            <p className="text-sm">{formatDate(vuln.createdAt)}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {new Date(vuln.createdAt).toLocaleDateString("en-US", {
-                                                    month: "short",
-                                                    day: "numeric",
-                                                    year: "numeric"
-                                                })}
-                                            </p>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex items-center justify-end gap-1">
-                                            {actionLoading === vuln.id && (
-                                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                            )}
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8"
-                                                onClick={() => handleView(vuln)}
-                                                title="View Details"
-                                            >
-                                                <Eye className="h-4 w-4 text-muted-foreground" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8"
-                                                onClick={() => handleEdit(vuln)}
-                                                title="Edit"
-                                            >
-                                                <Pencil className="h-4 w-4 text-muted-foreground" />
-                                            </Button>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                        <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-48">
-                                                    <DropdownMenuItem onClick={() => handleView(vuln)}>
-                                                        <Eye className="mr-2 h-4 w-4" />
-                                                        View Details
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleEdit(vuln)}>
-                                                        <Pencil className="mr-2 h-4 w-4" />
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleCopyId(vuln.id)}>
-                                                        <Copy className="mr-2 h-4 w-4" />
-                                                        Copy ID
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuSeparator />
-                                                    {vuln.status !== "OPEN" && (
-                                                        <DropdownMenuItem onClick={() => handleStatusChange(vuln, "OPEN")}>
-                                                            <XCircle className="mr-2 h-4 w-4" />
-                                                            Mark as Open
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    {vuln.status !== "IN_PROGRESS" && (
-                                                        <DropdownMenuItem onClick={() => handleStatusChange(vuln, "IN_PROGRESS")}>
-                                                            <Clock className="mr-2 h-4 w-4" />
-                                                            Mark In Progress
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    {vuln.status !== "RESOLVED" && (
-                                                        <DropdownMenuItem onClick={() => handleStatusChange(vuln, "RESOLVED")}>
-                                                            <CheckCircle className="mr-2 h-4 w-4" />
-                                                            Mark as Resolved
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuItem
-                                                        onClick={() => confirmDelete(vuln)}
-                                                        className="text-red-600 focus:text-red-600"
-                                                    >
-                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                        Delete
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
+                        </TableHeader>
+                        <TableBody>
+                            {paginatedVulnerabilities.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="h-24 text-center">
+                                        No vulnerabilities found.{" "}
+                                        <Link href="/dashboard/vulnerabilities/new" className="text-primary hover:underline">
+                                            Add your first vulnerability
+                                        </Link>
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                            ) : (
+                                paginatedVulnerabilities.map((vuln) => (
+                                    <TableRow key={vuln.id} className="group hover:bg-muted/50">
+                                        <TableCell>
+                                            <Checkbox />
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-start gap-2">
+                                                {getSeverityIcon(vuln.severity)}
+                                                <div>
+                                                    <button
+                                                        onClick={() => handleView(vuln)}
+                                                        className="font-medium hover:underline text-left"
+                                                    >
+                                                        {vuln.title}
+                                                    </button>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {vuln.cveId || `VT-${vuln.id.slice(-8).toUpperCase()}`}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge className={`${getSeverityBadge(vuln.severity)} rounded-full px-3`}>
+                                                {vuln.severity}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div>
+                                                <p className="text-sm font-medium">
+                                                    {vuln.asset || "System Asset"}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Web Application
+                                                </p>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge
+                                                variant="outline"
+                                                className={`${getStatusBadge(vuln.status)} rounded-full`}
+                                            >
+                                                {vuln.status === "IN_PROGRESS" ? "In Progress" :
+                                                    vuln.status.charAt(0) + vuln.status.slice(1).toLowerCase()}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div>
+                                                <p className="text-sm">{formatDate(vuln.createdAt)}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {new Date(vuln.createdAt).toLocaleDateString("en-US", {
+                                                        month: "short",
+                                                        day: "numeric",
+                                                        year: "numeric"
+                                                    })}
+                                                </p>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex items-center justify-end gap-1">
+                                                {actionLoading === vuln.id && (
+                                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                                )}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => handleView(vuln)}
+                                                    title="View Details"
+                                                >
+                                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => handleEdit(vuln)}
+                                                    title="Edit"
+                                                >
+                                                    <Pencil className="h-4 w-4 text-muted-foreground" />
+                                                </Button>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-48">
+                                                        <DropdownMenuItem onClick={() => handleView(vuln)}>
+                                                            <Eye className="mr-2 h-4 w-4" />
+                                                            View Details
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleEdit(vuln)}>
+                                                            <Pencil className="mr-2 h-4 w-4" />
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleCopyId(vuln.id)}>
+                                                            <Copy className="mr-2 h-4 w-4" />
+                                                            Copy ID
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        {vuln.status !== "OPEN" && (
+                                                            <DropdownMenuItem onClick={() => handleStatusChange(vuln, "OPEN")}>
+                                                                <XCircle className="mr-2 h-4 w-4" />
+                                                                Mark as Open
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        {vuln.status !== "IN_PROGRESS" && (
+                                                            <DropdownMenuItem onClick={() => handleStatusChange(vuln, "IN_PROGRESS")}>
+                                                                <Clock className="mr-2 h-4 w-4" />
+                                                                Mark In Progress
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        {vuln.status !== "RESOLVED" && (
+                                                            <DropdownMenuItem onClick={() => handleStatusChange(vuln, "RESOLVED")}>
+                                                                <CheckCircle className="mr-2 h-4 w-4" />
+                                                                Mark as Resolved
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                            onClick={() => confirmDelete(vuln)}
+                                                            className="text-red-600 focus:text-red-600"
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
 
                 {/* Pagination */}
                 <div className="p-4 flex items-center justify-between border-t">

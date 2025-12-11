@@ -538,7 +538,7 @@ export default function ReportsPage() {
                                 )}
 
                                 {includeSections.vulnerabilityDetails && (
-                                    <div className="border rounded-lg overflow-hidden">
+                                    <div className="border rounded-lg overflow-x-auto">
                                         <table className="w-full text-sm">
                                             <thead className="bg-slate-100">
                                                 <tr>
@@ -849,101 +849,103 @@ export default function ReportsPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[300px]">Report Name</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Date Generated</TableHead>
-                                <TableHead>Format</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {paginatedReports.length === 0 ? (
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center">
-                                        No reports generated yet. Create your first report above.
-                                    </TableCell>
+                                    <TableHead className="w-[300px]">Report Name</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Date Generated</TableHead>
+                                    <TableHead>Format</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
-                            ) : (
-                                paginatedReports.map((report) => (
-                                    <TableRow key={report.id}>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <FileText className="h-4 w-4 text-muted-foreground" />
-                                                <span className="font-medium">{report.name}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>{getTypeLabel(report.type)}</TableCell>
-                                        <TableCell>
-                                            {report.dateGenerated.toLocaleDateString("en-US", {
-                                                month: "short",
-                                                day: "numeric",
-                                                year: "numeric"
-                                            })}
-                                        </TableCell>
-                                        <TableCell>{report.format}</TableCell>
-                                        <TableCell>
-                                            <Badge
-                                                variant="outline"
-                                                className={
-                                                    report.status === 'completed'
-                                                        ? "bg-green-50 text-green-700 border-green-200"
-                                                        : report.status === 'processing'
-                                                            ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-                                                            : "bg-red-50 text-red-700 border-red-200"
-                                                }
-                                            >
-                                                {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8"
-                                                    onClick={() => downloadReport(report)}
-                                                    title="Download"
-                                                >
-                                                    <Download className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8"
-                                                    onClick={() => viewReport(report)}
-                                                    title="View"
-                                                >
-                                                    <Eye className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8"
-                                                    onClick={() => shareReport(report)}
-                                                    title="Share"
-                                                >
-                                                    <Share2 className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8"
-                                                    onClick={() => deleteReport(report.id)}
-                                                    title="Delete"
-                                                >
-                                                    <X className="h-4 w-4 text-muted-foreground hover:text-red-500" />
-                                                </Button>
-                                            </div>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedReports.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="h-24 text-center">
+                                            No reports generated yet. Create your first report above.
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                ) : (
+                                    paginatedReports.map((report) => (
+                                        <TableRow key={report.id}>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                                    <span className="font-medium">{report.name}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>{getTypeLabel(report.type)}</TableCell>
+                                            <TableCell>
+                                                {report.dateGenerated.toLocaleDateString("en-US", {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    year: "numeric"
+                                                })}
+                                            </TableCell>
+                                            <TableCell>{report.format}</TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant="outline"
+                                                    className={
+                                                        report.status === 'completed'
+                                                            ? "bg-green-50 text-green-700 border-green-200"
+                                                            : report.status === 'processing'
+                                                                ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                                                : "bg-red-50 text-red-700 border-red-200"
+                                                    }
+                                                >
+                                                    {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8"
+                                                        onClick={() => downloadReport(report)}
+                                                        title="Download"
+                                                    >
+                                                        <Download className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8"
+                                                        onClick={() => viewReport(report)}
+                                                        title="View"
+                                                    >
+                                                        <Eye className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8"
+                                                        onClick={() => shareReport(report)}
+                                                        title="Share"
+                                                    >
+                                                        <Share2 className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8"
+                                                        onClick={() => deleteReport(report.id)}
+                                                        title="Delete"
+                                                    >
+                                                        <X className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
 
                     {/* Pagination */}
                     {filteredReports.length > 0 && (

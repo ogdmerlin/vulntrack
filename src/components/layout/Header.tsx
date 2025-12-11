@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { NotificationDropdown } from "./NotificationDropdown"
 
 import { Button } from "@/components/ui/button"
@@ -25,10 +26,12 @@ export function Header() {
         ? session.user.name.split(' ').map(n => n[0]).join('').toUpperCase()
         : session?.user?.email?.substring(0, 2).toUpperCase() || 'U'
 
+    const [sheetOpen, setSheetOpen] = useState(false)
+
     return (
         <header className="flex h-14 items-center justify-between border-b bg-card px-6">
             <div className="flex items-center gap-4">
-                <Sheet>
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon" className="md:hidden">
                             <Menu className="h-5 w-5" />
@@ -36,7 +39,7 @@ export function Header() {
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="p-0 w-64">
-                        <SidebarContent />
+                        <SidebarContent onNavigate={() => setSheetOpen(false)} />
                     </SheetContent>
                 </Sheet>
                 <h1 className="text-lg font-semibold">Dashboard</h1>

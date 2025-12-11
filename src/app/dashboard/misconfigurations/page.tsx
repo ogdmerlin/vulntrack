@@ -147,7 +147,7 @@ export default function MisconfigurationsPage() {
             </div>
 
             {/* Table */}
-            <div className="rounded-md border bg-card">
+            <div className="rounded-md border bg-card overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>

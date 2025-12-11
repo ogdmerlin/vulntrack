@@ -43,11 +43,15 @@ const sidebarItems = [
     },
 ]
 
-export function SidebarContent() {
+interface SidebarProps {
+    onNavigate?: () => void
+}
+
+export function SidebarContent({ onNavigate }: SidebarProps) {
     return (
         <div className="flex h-full flex-col bg-card">
             <div className="flex h-14 items-center border-b px-6">
-                <Link href="/" className="flex items-center gap-2 font-semibold">
+                <Link href="/" className="flex items-center gap-2 font-semibold" onClick={onNavigate}>
                     <ShieldAlert className="h-6 w-6 text-primary" />
                     <span>VulnTrack</span>
                 </Link>
@@ -58,6 +62,7 @@ export function SidebarContent() {
                         <li key={index}>
                             <Link
                                 href={item.href}
+                                onClick={onNavigate}
                                 className={cn(
                                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
                                 )}

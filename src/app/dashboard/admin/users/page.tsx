@@ -251,7 +251,7 @@ export default function AdminUsersPage() {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
                             <Select value={roleFilter} onValueChange={setRoleFilter}>
                                 <SelectTrigger className="w-[130px]">
                                     <SelectValue placeholder="All Roles" />
@@ -287,7 +287,7 @@ export default function AdminUsersPage() {
                         </div>
                     </div>
 
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted/50 hover:bg-muted/50">

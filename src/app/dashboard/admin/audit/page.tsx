@@ -41,7 +41,7 @@ export default function AuditLogsPage() {
                 <h2 className="text-3xl font-bold tracking-tight">Audit Logs</h2>
             </div>
 
-            <div className="rounded-md border bg-card">
+            <div className="rounded-md border bg-card overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
